@@ -74,3 +74,16 @@ double min_deltaR(TLorentzVector* test_particle, std::vector<UInt_t>& bool_vecto
   double min_dR=*std::min_element(delta_Rs.begin(),delta_Rs.end());
   return min_dR;
 }
+
+// Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+float metProjectionClosestLepton(TLorentzVector* met, TLorentzVector* muon, TLorentzVector* tau){
+    // Calculate the delta phi between the MET, the muon and the tau
+    double deltaPhiMuon = del_phi(muon->Phi(), met->Phi());
+    double deltaPhiTau = del_phi(tau->Phi(), met->Phi());
+    // Check which one is the closest
+    bool muonIsClosest = deltaPhiMuon < deltaPhiTau;
+    // Calculate the projection
+    float projection = muonIsClosest ? met->Pt() * cos(deltaPhiMuon) : met->Pt() * cos(deltaPhiTau);
+    return projection;
+
+}

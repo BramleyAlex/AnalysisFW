@@ -1,12 +1,16 @@
 #pragma once
 
 double pi=TMath::Pi();
-std::vector<std::string> cutNames{"basic","dphi","ptl","tpt","j1pt","mjj","mtl"};
+// Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+std::vector<std::string> cutNames{"basic","dphi","ptl","tpt","j1pt","mjj","mtl","metproj"};
 std::vector<std::string> notFull{"basic","all"};
 
 // Raw historgrams
 TH1F* nJets = new TH1F("nJets","Number of jets",10,0,10);
 TH1F* tauEta = new TH1F("tauEta","Tau Eta",60,-3,3);
+
+// Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+histogramContainer metProjecClosestLepContainer{"projec_closest_lep","MET projection to the closest lepton",100,-200,200,cutNames,"metproj"};
 
 // Histogram containers
 histogramContainer lep_ptContainer{"lep_pt","Lep pT",500,0,500,cutNames,"ptl"};

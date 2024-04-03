@@ -6,6 +6,8 @@
 
 double del_phi(double phi_1, double phi_2);
 double min_deltaR(TLorentzVector* test_particle, std::vector<UInt_t>& bool_vector_container,const std::vector<TLorentzVector*>& jet_container);
+// Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+float metProjectionClosestLepton(TLorentzVector* met, TLorentzVector* muon, TLorentzVector* tau);
 
 void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
   double pi=TMath::Pi();
@@ -54,13 +56,17 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
       // Transverse mass
       double transverseMassLep = sqrt(2*muon_0_p4->Pt()*met_reco_p4->Pt()*(1-cos(muon_0_p4->Phi()-met_reco_p4->Phi())));
 
+      // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+      float metProjecClosestLep = metProjectionClosestLepton(met_reco_p4,muon_0_p4,tau_0_p4);
+
       // Handling BDT
       float bdt_transmasslep = inv_taulep > 200 ? transverseMassLep/std::pow(inv_taulep,0.3) : transverseMassLep/std::pow(200,0.3); // for transverse-reco mass ratio
       m_vbfBDT.update(mjj, 0.0, 0.0, 0.0, 0.0, bdt_transmasslep, event_number);
       double VBFBDT_score = m_vbfBDT.evaluate();
     
       // Cuts vector
-      std::vector<int> cuts={0,0,0,0,0,0};
+      // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+      std::vector<int> cuts={0,0,0,0,0,0,0};
       // CUTS
       if (angle<=2.5){cuts[0]=1;}
       if(muon_0_p4->Pt()>=30){cuts[1]=1;}
@@ -69,6 +75,9 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
       if(mjj>=1000){cuts[4]=1;} 
       bool diLeptonMassRequirement =  inv_taulep >= 70;
       if (diLeptonMassRequirement){cuts[5]=1;}
+      // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+      if (metProjecClosestLep>=30){cuts[6]=1;}
+
       
 
       // SUM OF THE VECTOR STORING IF CUTS PASS OR NOT
@@ -87,6 +96,8 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
       }
 
       // FILLING CONATINER HISTOGRAMS
+      // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+      metProjecClosestLepContainer.Fill(metProjecClosestLep,weight,cutsVector);
       lep_ptContainer.Fill(muon_0_p4->Pt(),weight,cutsVector);
       tau_ptContainer.Fill(tau_0_p4->Pt(),weight,cutsVector);
       n_bjetsContainer.Fill(n_bjets_MV2c10_FixedCutBEff_85,weight,notFullCutsVector);
