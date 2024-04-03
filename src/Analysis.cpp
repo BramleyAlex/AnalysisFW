@@ -177,6 +177,9 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
       // Transverse mass
       double transverseMassLep = sqrt(2*muon_0_p4->Pt()*met_reco_p4->Pt()*(1-cos(muon_0_p4->Phi()-met_reco_p4->Phi())));
 
+      // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+      float metProjecClosestLep = metProjectionClosestLepton(met_reco_p4,muon_0_p4,tau_0_p4);
+
         // Cuts vector
       std::vector<int> cuts={0,0,0,0,0,0};
       // CUTS
@@ -213,6 +216,8 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
         m_signalTree.m_jet1_pT = ljet_1_p4->Pt();
         m_signalTree.m_met_pT = met_reco_p4->Pt();
         m_signalTree.m_event_number = event_number;
+        // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+        m_signalTree.m_metProjection = metProjecClosestLep;
         // Fill tree
         m_signalTree.FillTree();
       } else {
@@ -228,6 +233,8 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
         m_backgroundTree.m_jet1_pT = ljet_1_p4->Pt();
         m_backgroundTree.m_met_pT = met_reco_p4->Pt();
         m_backgroundTree.m_event_number = event_number;
+        // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+        m_backgroundTree.m_metProjection = metProjecClosestLep;
         // Fill tree
         m_backgroundTree.FillTree();
       }

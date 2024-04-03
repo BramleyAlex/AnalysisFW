@@ -21,6 +21,8 @@ class OutputTree {
     private:
     std::unique_ptr<TTree> m_Tree = nullptr;
     public: // To be able to access this members directly and assign in FillTree.
+    // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+    double m_metProjection;
     double m_mcWeight;
     double m_mjj;
     double m_deltaRapidity;

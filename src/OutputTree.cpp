@@ -17,4 +17,6 @@ OutputTree::OutputTree(const char* treeName, const char* treeDescription){
     m_Tree->Branch("jet1_p4", &m_jet1_pT);
     m_Tree->Branch("met_p4", &m_met_pT);
     m_Tree->Branch("eventNumber", &m_event_number);
+    // Tutorial: https://github.com/diegobaronm/AnalysisFW/wiki/Mini%E2%80%90tutorial
+    m_Tree->Branch("metProjection", &m_metProjection);
 }
