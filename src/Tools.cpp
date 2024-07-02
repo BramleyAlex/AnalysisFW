@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <memory>
+#include <cmath>
 
 // Function to split a string by a delimiter and return a vector of strings.
 // Like Python's split function.
@@ -73,4 +74,44 @@ double min_deltaR(const TLorentzVector& test_particle, const TLorentzVector& jet
 TLorentzVector& toGeV(TLorentzVector &v) {
     v.SetPtEtaPhiE(v.Pt()/1000., v.Eta(), v.Phi(), v.E()/1000.);
     return v;
+}
+
+// Function to calculate the pT balance of the jets and taus. NOTE - CURRENTLY MISSING NEUTRINO ENERGY
+//@param particles: vector of particle four momenta
+double CalculatePtBalance(const std::vector<TLorentzVector> particles)
+{
+    double vector_sum_x{0};
+    double vector_sum_y{0};
+    double scalar_sum{0};
+
+    std::vector<TLorentzVector>::const_iterator particle_p4;
+    for (particle_p4 = particles.begin(); particle_p4 < particles.end(); particle_p4++)
+    {
+        vector_sum_x += particle_p4->Px();
+        vector_sum_y += particle_p4->Py();
+        scalar_sum += particle_p4->Pt();
+    }
+
+    double vector_sum_mag = std::sqrt(std::pow(vector_sum_x,2) + std::pow(vector_sum_y,2));
+    return vector_sum_mag / scalar_sum;
+}
+
+// Function to calculate omega parameter
+double CalculateOmega(const TLorentzVector& tau_0_p4, const TLorentzVector& tau_1_p4, const TLorentzVector& met_p4)
+{
+    double angle_tau_tau = del_phi(tau_0_p4.Phi(), tau_1_p4.Phi());
+    double angle_tau0_met = del_phi(tau_0_p4.Phi(), met_p4.Phi());
+    double angle_tau1_met = del_phi(tau_1_p4.Phi(), met_p4.Phi());
+    if (angle_tau0_met < angle_tau1_met)
+    {
+        double omega = angle_tau0_met / angle_tau_tau;
+        if (angle_tau1_met < angle_tau_tau) return omega;
+        else return omega * -1;
+    }
+    else
+    {
+        double omega = angle_tau1_met / angle_tau_tau;
+        if (angle_tau0_met < angle_tau_tau) return 1 - omega;
+        else return omega + 1;
+    }
 }
