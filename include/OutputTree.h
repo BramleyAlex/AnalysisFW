@@ -33,4 +33,6 @@ class OutputTree {
     double m_jet1_pT;
     double m_met_pT;
     double m_event_number;
+    double m_pt_balance;
+    double m_jet_gap;
 };

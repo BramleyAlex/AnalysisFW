@@ -17,4 +17,6 @@ OutputTree::OutputTree(const char* treeName, const char* treeDescription){
     m_Tree->Branch("jet1_p4", &m_jet1_pT);
     m_Tree->Branch("met_p4", &m_met_pT);
     m_Tree->Branch("eventNumber", &m_event_number);
+    m_Tree->Branch("PtBalance", &m_pt_balance);
+    m_Tree->Branch("JetGap", &m_jet_gap);
 }
