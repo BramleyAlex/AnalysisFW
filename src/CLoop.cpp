@@ -15,7 +15,7 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
 
     if (fChain == 0) return;
 
-    Long64_t nentries = fChain->GetEntriesFast();
+    Long64_t nentries = fChain->GetEntries();
 
     // if in fast mode only loop over 1% of the entries
     Long64_t nLoop = nentries;
@@ -36,6 +36,8 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
     bool saveHistograms = config.m_saveHistograms;
     bool saveEvents = config.m_saveEvents;   
     // loop over number of entries
+    int unordered_jet{0};
+    int unordered_tau{0};
     for (Long64_t jentry=0; jentry<nLoop;jentry++) {
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break;
@@ -57,6 +59,9 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
         tau_1_p4.SetPtEtaPhiE(TauPt->at(1),TauEta->at(1),TauPhi->at(1),TauE->at(1));
         tau_0_p4 = toGeV(tau_0_p4);
         tau_1_p4 = toGeV(tau_1_p4);
+
+        if (ljet_0_p4.Pt() < ljet_1_p4.Pt()) unordered_jet += 1;
+        if (tau_0_p4.Pt() < tau_1_p4.Pt()) unordered_jet += 1;
 
         // Variable defining regions
         // DELTA RAPIDITY 2-JETS
@@ -94,13 +99,17 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
         }
 
         // fill histograms
-        //cout << eventWeight;
+        //std::cout << eventWeight<< "   ";
         if (saveHistograms) Fill(eventWeight, z_sample, key);
         if (saveEvents) FillTree(eventWeight, z_sample, key);
         // end filling
 
     }
     // end style and writing
+    if (unordered_jet > 0) std::cout<<"Warning: Sample contains unordered jets in "<<unordered_jet<<" events"<<std::endl;
+    if (unordered_tau > 0) std::cout<<"Warning: Sample contains unordered jets in "<<unordered_tau<<" events"<<std::endl;
+
+
     if (saveHistograms) Style(lumFactor);   
     if (saveEvents) {
         m_outputFile->WriteObject(m_signalTree.GetTree(),"SIGNAL");
@@ -119,4 +128,11 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
     // calculate time taken and print it
     double time_spent = (endTime - startTime) / CLOCKS_PER_SEC;
     std::cout << "Time processing == " <<time_spent << std::endl;
+}
+
+int CLoop::GetNEntries()
+{
+  Long64_t nentries = fChain->GetEntries();
+  int n = static_cast<int>(nentries);
+  return n;
 }

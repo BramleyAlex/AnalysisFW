@@ -44,6 +44,7 @@ class CLoop {
    void     Loop(float lumFactor, int z_sample, std::string key, const CLoopConfig& config);
    Bool_t   Notify();
    void     Show(Long64_t entry = -1);
+   int GetNEntries();
 
    private:
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
