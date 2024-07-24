@@ -1,6 +1,7 @@
 import sys
 import os
 import ROOT as r
+import numpy as np
 
 # Define the colors for the output
 class bcolors:
@@ -43,7 +44,7 @@ from AnalysisFW import CLoop,CLoopConfig
 # This is a hack to allow the C++ class to be pickled, see:
 # https://www.boost.org/doc/libs/1_84_0/libs/python/doc/html/reference/topics/pickle_support.html
 def CLoopConfig_getinitargs(self):
-  return (self.m_saveHistograms,self.m_saveEvents,self.m_reweightMjj,self.m_bdtWeightsPath)
+  return (self.m_saveHistograms,self.m_saveEvents,self.m_reweightMjj,self.m_bdtWeightsPath, self.m_region, self.m_massRegion)
 # now inject __getinitargs__ (Python is a dynamic language!)
 CLoopConfig.__getinitargs__ = CLoopConfig_getinitargs
 
@@ -130,7 +131,7 @@ def createOutputDirectory(outputPath,treeName,verbosity):
             print(DEBUG("Creating output for tree at: "), os.path.abspath(outputPath)+"/"+treeName)
         os.makedirs(outputPath+"/"+treeName)
 
-def createConfigObject(jobTypeArgument,verbosity):
+def createConfigObject(jobTypeArgument,verbosity,region,massRegion):
     makeHistograms = 'h' in jobTypeArgument
     if verbosity=="DEBUG" and makeHistograms:
         print(DEBUG("Making histograms!"))
@@ -143,7 +144,13 @@ def createConfigObject(jobTypeArgument,verbosity):
     mvaWeightsPath = findMainPath()+"/data/MVA-Weights/10Folds_BDT-0.3.weights.xml"
     if verbosity=="DEBUG":
         print(DEBUG("MVA weights path: "), mvaWeightsPath)
-    return CLoopConfig(makeHistograms,makeNTuples,makeReweighting,mvaWeightsPath)
+    if massRegion=="low":
+        massRegion_int = 0
+    elif massRegion=="medium":
+        massRegion_int = 1
+    elif massRegion=="high":
+        massRegion_int = 2
+    return CLoopConfig(makeHistograms,makeNTuples,makeReweighting,mvaWeightsPath,region,massRegion_int)
 
 def createArgumentParser():
     # Parse the script arguments
@@ -153,10 +160,12 @@ def createArgumentParser():
     executionMode.add_argument("--singleSample", help="Run over a single sample.",type=str,default="")
     executionMode.add_argument("--inputFile", help="Input txt file with a list of samples to run over.",type=str,default="")
     parser.add_argument("--verbosity", help="Verbosity level.",type=str,default="INFO",choices=["INFO","DEBUG"])
-    parser.add_argument("--treeName", help="Name of the tree to run over.",type=str,default="NOMINAL")
+    parser.add_argument("--treeName", help="Name of the tree to run over.",type=str,default="T_s2thh_NOMINAL")
     parser.add_argument("--jobType", help="Type of job to run.",type=str,default="h",choices=["h","n","hn","hr","hnr"])
     parser.add_argument("--outputDir", help="Path of to the directory used to store the processed samples.",type=str,default=findMainPath()+"/Results")
     parser.add_argument("--j", help="Number of cores to use.",type=int,default=1)
+    parser.add_argument("--region", help="Which region to run over.",type=str,default="all",choices=["all","SR","CR","CRa","CRb","CRc"])
+    parser.add_argument("--massRegion", help="low: <116, medium: 116-160, high: >160",type=str,default="low",choices=["low","medium","high"])
     return parser
 
 def getArgumentTupleForSampleGroup(treeName,sampleGroup,verbosity,outputPath,analysisConfig):
@@ -186,7 +195,7 @@ def runAnalysis(treeName,sampleName,verbosity,outputPath,analysisConfig):
     weight = getNormalise(sampleName,lumFactor)
     if verbosity=="DEBUG":
         print(DEBUG("Normalisation weight: "), weight)
-
+    print("Tree address: {0}".format(tree))
     analysis = CLoop(r.addressof(tree), sampleName)
     analysis.Loop(weight, sampleID, sampleName,analysisConfig)
     del analysis
@@ -219,7 +228,7 @@ if __name__ == "__main__":
     createOutputDirectory(args.outputDir,args.treeName,verbosity)
 
     # Create the config object to pass to CLoop
-    config = createConfigObject(args.jobType,verbosity)
+    config = createConfigObject(args.jobType,verbosity,args.region,args.massRegion)
 
     # If a single sample is chosen, run just over that
     if args.singleSample != "":
@@ -252,7 +261,7 @@ if __name__ == "__main__":
         print(TITLE("Running over "+str(len(allMC))+" MC samples\n"))
         with multiprocessing.Pool(processes=nCPU) as pool:
             pool.starmap(runAnalysis, mcTuple)
-
+    
     # Say goodbye and print the time taken
     print(HEADER("Analysis done"))
     print(DEBUG("Time taken: "+str(time.time()-initTime)))

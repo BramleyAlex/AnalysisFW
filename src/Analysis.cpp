@@ -80,9 +80,9 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
       TLorentzVector ttvv_p4 = tau_0_p4 + tau_1_p4 + neus_p4.first + neus_p4.second;
       double inv_tt_reco = ttvv_p4.Mag();
 
-      if (inv_tt_reco <= 160) //Blinding for high mass region
+      if (inv_tt_reco <= 160 || sampleName.substr(0,4)!="data") //Blinding for high mass region
       {
-        //TAU-Tau invariant mass with met (should be the same as met_ttvv)
+        //TAU-Tau invariant mass with met
         TLorentzVector ttmet_p4 = tau_0_p4 + tau_1_p4 + met_reco_p4;
         double inv_ttmet = ttmet_p4.Mag();
 
@@ -94,9 +94,12 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
         double transverseMassTau1 = sqrt(2*tau_1_p4.Pt()*met_reco_p4.Pt()*(1-cos(tau_1_p4.Phi()-met_reco_p4.Phi())));
 
         // Handling BDT
-        //float bdt_transmasstau1 = inv_tautau > 200 ? transverseMassTau1/std::pow(inv_tautau,0.3) : transverseMassTau1/std::pow(200,0.3); // for transverse-reco mass ratio
-        //m_vbfBDT.update(mjj, 0.0, 0.0, 0.0, 0.0, bdt_transmasstau1, eventNumber);
-        //double VBFBDT_score = m_vbfBDT.evaluate();
+        float bdt_transmasstau1 = inv_tautau > 200 ? transverseMassTau1/std::pow(inv_tautau,0.3) : transverseMassTau1/std::pow(200,0.3); // for transverse-reco mass ratio
+        std::cout<<"Transverse Mass Tau1: "<<transverseMassTau1<<std::endl;
+        std::cout<<"Inv tt: "<<inv_tautau<<std::endl;
+        std::cout<<"BDT transmass Tau1: "<<bdt_transmasstau1<<std::endl;
+        m_vbfBDT.update(mjj, 0.0, 0.0, 0.0, 0.0, bdt_transmasstau1, eventNumber);
+        double VBFBDT_score = m_vbfBDT.evaluate();
 
         // Rapidity seperation jets
         double delta_yjj = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
@@ -134,6 +137,12 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
         // MET angle
         double MET_angle = std::min(del_phi(met_reco_p4.Phi(),tau_0_p4.Phi()),del_phi(met_reco_p4.Phi(),tau_1_p4.Phi()));
       
+        // cuts
+
+        bool diLeptonMassRequirement;
+        if (config.m_massRegion == LOW_M) diLeptonMassRequirement =  inv_tt_reco >= 66 && inv_tt_reco <=116;
+        else if (config.m_massRegion == MEDIUM_M) diLeptonMassRequirement =  inv_tt_reco >= 101 && inv_tt_reco <=160;
+        else if (config.m_massRegion == HIGH_M) std::cerr<<"High mass cut not defined yet"<<std::endl;
         // Cuts vector
         std::vector<int> cuts={0,0,0,0,0,0,0,0,0,0};
         // CUTS
@@ -141,7 +150,8 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
         if(tau_1_p4.Pt()>=50){cuts[1]=1;} //50
         if(ljet_0_p4.Pt()>=75){cuts[2]=1;}
         if(ljet_1_p4.Pt()>=70){cuts[3]=1;}
-        bool diLeptonMassRequirement =  inv_tt_reco >= 66 && inv_tt_reco <=116;
+        //bool diLeptonMassRequirement =  inv_tt_reco >= 66 && inv_tt_reco <=116;
+        
         if (diLeptonMassRequirement){cuts[4]=1;}
         if (delta_yjj > 2){cuts[5]=1;}
         if (omega >= -0.4 && omega <= 1.4){cuts[6]=1;}
@@ -195,8 +205,10 @@ void CLoop::Fill(double weight, int z_sample, const std::string& sampleName) {
         if (omega >= 0 && omega <=1) tau1_reco_pt_inContainer.Fill(tau_1_reco_p4.Pt(),weight,notFullCutsVector);
         else tau1_reco_pt_outContainer.Fill(tau_1_reco_p4.Pt(),weight,notFullCutsVector);
 
-        if (omega >= 0 && omega <=1) mass_tt_reco_insideContainer.Fill(inv_tt_reco,weight,cutsVector);
-        else mass_tt_reco_outsideContainer.Fill(inv_tt_reco,weight,cutsVector);
+        if (omega >= 0 && omega <=1) reco_mass_tt_insideContainer.Fill(inv_tt_reco,weight,cutsVector);
+        else reco_mass_tt_outsideContainer.Fill(inv_tt_reco,weight,cutsVector);
+        reco_mass_ttContainer.Fill(inv_tt_reco,weight,cutsVector);
+
         met_angleContainer.Fill(MET_angle,weight,notFullCutsVector);
 
         if (region_cut)

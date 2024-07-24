@@ -5,13 +5,19 @@
 #include "CLoopConfig.h"
 #include <TLorentzVector.h>
 #include <memory>
+#include <vector>
 
 std::vector<std::string> split(const std::string& s, char delimiter);
 TLorentzVector& toGeV(TLorentzVector &v);
+bool CalculateNGapJets(const double &ljet_0_rapidity, const double &ljet_1_rapidity, const std::vector<float> *JetEta);
 
-void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConfig& config)
+
+void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConfig& i_config)
 {
+    config = i_config;
     clock_t startTime = clock(); // get start time
+
+    std::cout<<"mass region: "<<config.m_massRegion<<std::endl;
 
     if (fChain == 0) return;
 
@@ -70,10 +76,20 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
         double lepton_xi=(tau_0_p4+tau_1_p4).Rapidity();
         double dijet_xi=ljet_0_p4.Rapidity()+ljet_1_p4.Rapidity();
         double z_centrality=abs(lepton_xi-0.5*dijet_xi)/delta_y;
+        bool N_gap_jets = CalculateNGapJets(ljet_0_p4.Rapidity(), ljet_1_p4.Rapidity(), JetEta);
+
 
         Region region = Region::DefaultNoRW;
-        if (z_centrality<0.5){region = Region::SR;}
-        else if (z_centrality<=1.0){region = Region::CR;}
+        if (z_centrality<0.5)
+        {
+          if (N_gap_jets == 0) region = Region::SR;
+          else region = Region::CRa;
+        }
+        else if (z_centrality<=1.0)
+        {
+          if (N_gap_jets == 0) region = Region::CRc;
+          else region = Region::CRb;
+        }
 
         double mjj = sqrt(2*(ljet_0_p4.Dot(ljet_1_p4)));
         double mjj_w = 1.0;
@@ -89,6 +105,8 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
             } else if (mcSample == MC::MadGraph){ 
                 mjj_w = mjj_rw(mjj,parametersMadGraph[region]);
             }
+            //std::cout<<static_cast<std::underlying_type<MC>::type>(mcSample)<<"  ";
+            //std::cout<<static_cast<std::underlying_type<Region>::type>(region)<<"  "<<mjj_w<<std::endl;
         }
         double eventWeight = 1;
         // check if event is from real data
@@ -97,7 +115,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
             eventWeight = weight*lumFactor*mjj_w;
     
         }
-
         // fill histograms
         //std::cout << eventWeight<< "   ";
         if (saveHistograms) Fill(eventWeight, z_sample, key);
