@@ -15,7 +15,7 @@ v26Paths = {
 
 # Set up the example path for the analysis depending on the user machine name.
 # If the user is not in the list, add the default path.
-username = os.environ['USER']
+username = "user"
 if username in v26Paths:
     paths = v26Paths[username]
     paths = [findMainPath()+'/data/'] + paths
