@@ -167,3 +167,39 @@ void PrintTLorentzVectorXYZT(const TLorentzVector& input)
 {
   std::cout<<"X: "<<input.X()<<" Y: "<<input.Y()<<" Z: "<<input.Z()<< " T: "<<input.E()<<std::endl;
 }
+
+bool CalculateNGapJets(const double &ljet_0_rapidity, const double &ljet_1_rapidity, const std::vector<float> *JetEta)
+{
+  if (JetEta->size()>=3)
+  {
+    double lower_bound;
+    double upper_bound;
+    if (ljet_0_rapidity < ljet_1_rapidity)
+    {
+      lower_bound = ljet_0_rapidity;
+      upper_bound = ljet_1_rapidity;
+    }
+    else
+    {
+      lower_bound = ljet_1_rapidity;
+      upper_bound = ljet_0_rapidity;
+    }
+    double ljet_2_rapidity = JetEta->at(2);
+    if (ljet_2_rapidity >= lower_bound && ljet_2_rapidity <= upper_bound) 
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Region(std::string region_id, const bool& N_gap_jets, const double& Z_centrality)
+{
+  if (region_id == "SR") {if (N_gap_jets == 0 && Z_centrality < 0.5) return true;}
+  else if (region_id == "CRa") {if (N_gap_jets == 1 && Z_centrality < 0.5) return true;}
+  else if (region_id == "CRb") {if (N_gap_jets == 1 && Z_centrality >= 0.5 && Z_centrality <=1) return true;}
+  else if (region_id == "CRc") {if (N_gap_jets == 0 && Z_centrality >= 0.5 && Z_centrality <=1) return true;}
+  else if (region_id == "CR") {if (Z_centrality >= 0.5 || N_gap_jets == 1) return true;}
+  else if (region_id == "all") {return true;}
+  return false;
+}
