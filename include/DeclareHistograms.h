@@ -1,7 +1,7 @@
 #pragma once
 
 double pi=TMath::Pi();
-std::vector<std::string> cutNames{"basic","t0pt","t1pt","j0pt","j1pt","mjj","mtt","yjj","ome","ptbal"};
+std::vector<std::string> cutNames{"basic","t0pt","t1pt","j0pt","j1pt","mtt","yjj","ome","ptbal","rgn","mjj"};
 std::vector<std::string> notFull{"basic","all"};
 
 // Raw historgrams
@@ -17,7 +17,7 @@ histogramContainer mass_jjContainer{"mass_jj","Invariant mass di_jet system",500
 histogramContainer ljet0_ptContainer{"ljet0_pt","Light jet0 pT",1000,0,1000,cutNames,"j0pt"};
 histogramContainer ljet1_ptContainer{"ljet1_pt","Light jet1 pT",1000,0,1000,cutNames,"j1pt"};
 histogramContainer bdtContainer{"bdtScore","BDT Score",200,-1,1,notFull};
-histogramContainer visibleMassContainer{"visibleMass","Visible mass tau-tau",140,0,140,cutNames};
+histogramContainer visibleMassContainer{"visibleMass","Visible mass tau-tau",160,0,160,cutNames};
 histogramContainer tau1TransMassContainer{"tau1TransMass","Transverse mass sub-leading Tau",500,0,500,cutNames};
 histogramContainer rnn_score_1pContainer{"rnn_score_1p","RNN Score 1 prong taus",100,0,1,notFull};
 histogramContainer rnn_score_3pContainer{"rnn_score_3p","RNN Score 3 prong taus",100,0,1,notFull};
@@ -46,10 +46,25 @@ histogramContainer neutrino_eta_testContainer{"neutrino_eta_test","difference be
 histogramContainer neutrino_px_testContainer{"neutrino_px_test", "difference between neutrinos and MET px",1000,-500,500,notFull};
 histogramContainer neutrino_py_testContainer{"neutrino_py_test", "difference between neutrinos and MET py",1000,-500,500,notFull};
 
-histogramContainer mass_tt_reco_insideContainer{"mass_ttvv_in","Invariant of mass reconstructed tau-tau (MET inside)",140,0,140,cutNames,"mtt"};
-histogramContainer mass_tt_reco_outsideContainer{"mass_ttvv_out","Invariant of mass reconstructed tau-tau (MET outside)",140,0,140,cutNames,"mtt"};
-//histogramContainer mass_ttmet_insideContainer{"mass_ttmet_in","Invariant of mass tau-tau system with missing energy (MET inside)",1500,0,1500,notFull};
+histogramContainer reco_mass_tt_insideContainer{"reco_mass_tt_in","Invariant of mass reconstructed tau-tau (MET inside)",1000,0,1000,cutNames,"mtt"};
+histogramContainer reco_mass_tt_outsideContainer{"reco_mass_tt_out","Invariant of mass reconstructed tau-tau (MET outside)",1000,0,1000,cutNames,"mtt"};
+histogramContainer reco_mass_ttContainer{"reco_mass_tt","Invariant of mass reconstructed tau-tau",1000,0,1000,cutNames,"mtt"};
+
 histogramContainer met_angleContainer{"met_angle","Angle of MET with closest tau",32,0,3.2,notFull};
 
-histogramContainer z_centralityContainer{"centrality", "Z centrality",40,0,2,notFull};
-histogramContainer N_gapjetsContainer{"N_gapjets", "Number of gap jets",2,0,2,notFull};
+histogramContainer z_centralityContainer{"centrality", "Z centrality",40,0,2,cutNames,"rgn"};
+histogramContainer N_gapjetsContainer{"N_gapjets", "Number of gap jets",2,0,2,cutNames,"rgn"};
+
+histogramContainer z_sampleContainer{"z_sample", "z sample",5,0,5,notFull};
+histogramContainer weightContainer{"weight", "weight",200,-10,10,notFull};
+
+histogramContainer jet_0_phiContainer{"jet_0_phi", "Leading Jet Phi",64,-3.2,3.2,cutNames};
+histogramContainer jet_1_phiContainer{"jet_1_phi", "Sub-Leading Jet Phi",64,-3.2,3.2,cutNames};
+histogramContainer jet_delta_phiContainer{"jet_delta_phi", "Angle between Jets",64,0,3.2,cutNames};
+
+histogramContainer jet_0_etaContainer{"jet_0_eta", "Leading Jet Pseudo-Rapidity",60,-3,3,cutNames};
+histogramContainer jet_1_etaContainer{"jet_1_eta", "Sub-Leading Jet Pseudo-Rapidity",60,-3,3,cutNames};
+histogramContainer jet_delta_etaContainer{"jet_delta_eta", "Pseudo-Rapidity between jets",60,0,6,cutNames};
+
+histogramContainer jet_0_EContainer{"jet_0_E", "Leading Jet Energy",1000,0,1000,cutNames};
+histogramContainer jet_1_EContainer{"jet_1_E", "Sub-Leading Jet Energy",1000,0,1000,cutNames};
