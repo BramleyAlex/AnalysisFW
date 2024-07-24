@@ -21,6 +21,11 @@ class CLoopWrapper {
         m_cloop->Loop(lumFactor, z_sample, key, config);
     }
 
+    int GetNEntries()
+    {
+        return m_cloop->GetNEntries();
+    }
+
     private:
     std::shared_ptr<CLoop> m_cloop;
 
