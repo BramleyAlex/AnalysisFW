@@ -13,7 +13,6 @@ BOOST_PYTHON_MODULE(AnalysisFW)
 {
     class_<CLoopWrapper>("CLoop", init<long long unsigned int, std::string>())
         .def("Loop", &CLoopWrapper::Loop)
-        .def("GetNEntries", &CLoopWrapper::GetNEntries)
     ;
 
     class_<CLoopConfig>("CLoopConfig", init<bool, bool, bool, std::string, std::string, int>())
