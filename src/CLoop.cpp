@@ -42,8 +42,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
     bool saveHistograms = config.m_saveHistograms;
     bool saveEvents = config.m_saveEvents;   
     // loop over number of entries
-    int unordered_jet{0};
-    int unordered_tau{0};
     for (Long64_t jentry=0; jentry<nLoop;jentry++) {
         Long64_t ientry = LoadTree(jentry);
         if (ientry < 0) break;
@@ -66,9 +64,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
         tau_0_p4 = toGeV(tau_0_p4);
         tau_1_p4 = toGeV(tau_1_p4);
 
-        if (ljet_0_p4.Pt() < ljet_1_p4.Pt()) unordered_jet += 1;
-        if (tau_0_p4.Pt() < tau_1_p4.Pt()) unordered_jet += 1;
-
         // Variable defining regions
         // DELTA RAPIDITY 2-JETS
         double delta_y = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
@@ -77,7 +72,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
         double dijet_xi=ljet_0_p4.Rapidity()+ljet_1_p4.Rapidity();
         double z_centrality=abs(lepton_xi-0.5*dijet_xi)/delta_y;
         bool N_gap_jets = CalculateNGapJets(ljet_0_p4.Rapidity(), ljet_1_p4.Rapidity(), JetEta);
-
 
         Region region = Region::DefaultNoRW;
         if (z_centrality<0.5)
@@ -105,8 +99,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
             } else if (mcSample == MC::MadGraph){ 
                 mjj_w = mjj_rw(mjj,parametersMadGraph[region]);
             }
-            //std::cout<<static_cast<std::underlying_type<MC>::type>(mcSample)<<"  ";
-            //std::cout<<static_cast<std::underlying_type<Region>::type>(region)<<"  "<<mjj_w<<std::endl;
         }
         double eventWeight = 1;
         // check if event is from real data
@@ -116,16 +108,12 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
     
         }
         // fill histograms
-        //std::cout << eventWeight<< "   ";
         if (saveHistograms) Fill(eventWeight, z_sample, key);
         if (saveEvents) FillTree(eventWeight, z_sample, key);
         // end filling
 
     }
     // end style and writing
-    if (unordered_jet > 0) std::cout<<"Warning: Sample contains unordered jets in "<<unordered_jet<<" events"<<std::endl;
-    if (unordered_tau > 0) std::cout<<"Warning: Sample contains unordered jets in "<<unordered_tau<<" events"<<std::endl;
-
 
     if (saveHistograms) Style(lumFactor);   
     if (saveEvents) {
@@ -145,11 +133,4 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
     // calculate time taken and print it
     double time_spent = (endTime - startTime) / CLOCKS_PER_SEC;
     std::cout << "Time processing == " <<time_spent << std::endl;
-}
-
-int CLoop::GetNEntries()
-{
-  Long64_t nentries = fChain->GetEntries();
-  int n = static_cast<int>(nentries);
-  return n;
 }
