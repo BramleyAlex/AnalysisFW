@@ -81,7 +81,6 @@ sampleNameDSID_dict = {
 # THIS FUNCTION MIGHT CHANGE FROM ONE NTUPLE FORMAT TO ANOTHER
 def getDSID(rootFiles):
     DSID = -1
-    #print(rootFiles)
     firstFile = r.TFile.Open(os.path.join(samplePath,rootFiles[0]))
     DSID = int(firstFile.Get("sumOfWeights").GetTitle())
     firstFile.Close()
@@ -99,7 +98,6 @@ def getPeriodSuffix(directoryName):
 
 # This function assumes that all the root files in the list have the same DSID
 def buildSampleNameROOTFileDict(DSID,rootFilesList,periodSuffix):
-    #print(rootFilesList)
     sampleNameROOTFile_dict = {}
     sampleName = sampleNameDSID_dict[DSID]+periodSuffix
     counter = 0
@@ -125,7 +123,6 @@ def getMetadataFromFile(pathToMetadataFile,DSID,sumWeights):
                 metadata_dict['kfac']=float(row[3])
                 metadata_dict['fil_eff']=float(row[4])
                 break
-    #print("DSID: {0} xsec: {1}; kfac: {2}; fil_eff {3}".format(DSID, metadata_dict['xsec'], metadata_dict['kfac'], metadata_dict['fil_eff']))
     return metadata_dict
 
 def getSumOfWeights(rootFiles,samplePath):
@@ -141,7 +138,6 @@ def buildSampleNameMetadataDict(DSID,periodSuffix,rootFilesList,metadata_dict):
     sampleGroupName = sampleNameDSID_dict[DSID]+periodSuffix
     for i in range(len(rootFilesList)):
         nameMetadata_dict[sampleGroupName+'_'+str(i)] = metadata_dict
-        #print(metadata_dict)
     return nameMetadata_dict
 
 def buildFolderNameDict(DSID,samplePath,periodSuffix):
@@ -186,7 +182,6 @@ if __name__ == "__main__":
 
     # Loop over all the directories.
     for samplePath in samplesPaths:
-        #print(samplePath)
         rootFiles = [f for f in listdir(samplePath) if f.endswith('.root')]
 
         if len(rootFiles) != 0:
