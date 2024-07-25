@@ -252,15 +252,12 @@ if __name__ == "__main__":
         getSamplesToRun(args.samples,allData,allMC)
         dataTuple = getArgumentTupleForSampleGroup(args.treeName,allData,verbosity,args.outputDir, config)
         mcTuple = getArgumentTupleForSampleGroup(args.treeName,allMC,verbosity,args.outputDir, config)
-
         print(TITLE("Running over "+str(len(allData))+" DATA samples\n"))
         with multiprocessing.Pool(processes=nCPU) as pool:
-            pool.starmap(runAnalysis, dataTuple)
-            
+            pool.starmap(runAnalysis, dataTuple) 
         print(TITLE("Running over "+str(len(allMC))+" MC samples\n"))
         with multiprocessing.Pool(processes=nCPU) as pool:
             pool.starmap(runAnalysis, mcTuple)
-    
     # Say goodbye and print the time taken
     print(HEADER("Analysis done"))
     print(DEBUG("Time taken: "+str(time.time()-initTime)))
