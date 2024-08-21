@@ -26,7 +26,7 @@ def ERROR(text):
 
 # Load the databases
 from infofile import infos
-from dataSets import dataSets, totRealLum, realList, dataCombos, dirs
+from dataSets import dataSets, totRealLum, realList, dataCombos, dirs, processes
 from DatasetsPaths import findMainPath
 
 # For parallel processing and timing
@@ -39,7 +39,7 @@ import argparse
 
 # Load the C++ library
 sys.path.append(findMainPath()+'/build/python/.')
-from AnalysisFW import CLoop,CLoopConfig
+from AnalysisFW import CLoopConfig, LM, MJ, HM, BDT, BDT_Cut
 
 # This is a hack to allow the C++ class to be pickled, see:
 # https://www.boost.org/doc/libs/1_84_0/libs/python/doc/html/reference/topics/pickle_support.html
@@ -141,7 +141,7 @@ def createConfigObject(jobTypeArgument,verbosity,region,massRegion):
     makeReweighting = 'r' in jobTypeArgument
     if verbosity=="DEBUG" and makeReweighting:
         print(DEBUG("Making reweighting!"))
-    mvaWeightsPath = findMainPath()+"/data/MVA-Weights/10Folds_BDT-0.3.weights.xml"
+    mvaWeightsPath = findMainPath()+"/data/MVA-Weights/10Folds_BDT-0.4.2.weights.xml"
     if verbosity=="DEBUG":
         print(DEBUG("MVA weights path: "), mvaWeightsPath)
     if massRegion=="low":
@@ -151,6 +151,16 @@ def createConfigObject(jobTypeArgument,verbosity,region,massRegion):
     elif massRegion=="high":
         massRegion_int = 2
     return CLoopConfig(makeHistograms,makeNTuples,makeReweighting,mvaWeightsPath,region,massRegion_int)
+
+def str2bool(str):
+    if isinstance(str, bool):
+        return str
+    if str.lower() in ("true", "yes", "t", "y", 1):
+        return True
+    elif str.lower() in ("false", "no", "f", "n", 0):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean Expected")
 
 def createArgumentParser():
     # Parse the script arguments
@@ -164,12 +174,34 @@ def createArgumentParser():
     parser.add_argument("--jobType", help="Type of job to run.",type=str,default="h",choices=["h","n","hn","hr","hnr"])
     parser.add_argument("--outputDir", help="Path of to the directory used to store the processed samples.",type=str,default=findMainPath()+"/Results")
     parser.add_argument("--j", help="Number of cores to use.",type=int,default=1)
-    parser.add_argument("--region", help="Which region to run over.",type=str,default="all",choices=["all","SR","CR","CRa","CRb","CRc"])
-    parser.add_argument("--massRegion", help="low: <116, medium: 116-160, high: >160",type=str,default="low",choices=["low","medium","high"])
+    parser.add_argument("--region", help="Which region to run over.",type=str,default="all",choices=["all","SR","CR","CRa","CRb","CRc"]) #Phase this out/overhaul
+    parser.add_argument("--massRegion", help="low: <116, medium: 116-160, high: >160",type=str,default="low",choices=["low","medium","high"]) #Phase this out
+    parser.add_argument("--analysisType",help="Type of physics analysis to run",type=str,default="LM",choices=["LM","MJ","HM","BDT","BDTCUT"])
+    parser.add_argument("--histAdd",help="Add histograms into groups defined in dataSets.py. Only runs if using --samples",type=str2bool,nargs='?',default=False,const=True)
     return parser
 
 def getArgumentTupleForSampleGroup(treeName,sampleGroup,verbosity,outputPath,analysisConfig):
     return product([treeName],sampleGroup,[verbosity],[outputPath],[analysisConfig])
+
+def mergeFiles(treeName,verbosity,outputPath,cores):
+    # Output Path
+    path = outputPath+"/"+treeName+"/"
+    for key, value in processes.items():
+        file_output = key + ".root"
+        file_input = ""
+        if verbosity=="DEBUG":
+            print(DEBUG("Creating file "+file_output))
+        for i in value:
+            file_input += (" "+ path + i + ".root")
+
+        success = os.system(("hadd -f -j {0} "+outputPath+"/"+file_output+file_input).format(cores))
+        if success != 0:
+            print(ERROR("Error creating "+file_output))
+            sys.exit(1)
+    success = os.system("rm -r "+path)
+    if success !=0:
+        print(ERROR("Error deleting {0} folder".format(treeName)))
+        sys.exit(1)
 
 def runAnalysis(treeName,sampleName,verbosity,outputPath,analysisConfig):
     # Get the absolute path of the file
@@ -196,8 +228,18 @@ def runAnalysis(treeName,sampleName,verbosity,outputPath,analysisConfig):
     if verbosity=="DEBUG":
         print(DEBUG("Normalisation weight: "), weight)
     print("Tree address: {0}".format(tree))
-    analysis = CLoop(r.addressof(tree), sampleName)
+    #analysis = CLoop(r.addressof(tree), sampleName)
+
+    if args.analysisType == "LM": analysis = LM(r.addressof(tree), sampleName)
+    elif args.analysisType == "MJ": analysis = MJ(r.addressof(tree), sampleName)
+    elif args.analysisType == "HM": analysis = HM(r.addressof(tree), sampleName)
+    elif args.analysisType == "BDT": analysis = BDT(r.addressof(tree), sampleName)
+    elif args.analysisType == "BDTCUT": analysis = BDT_Cut(r.addressof(tree), sampleName)
+    else:
+        print(ERROR("Cloop derived class not found."))
+        sys.exit(1)
     analysis.Loop(weight, sampleID, sampleName,analysisConfig)
+    
     del analysis
     file.Close()
     success = os.system("mv "+sampleName+".root "+outputPath+"/"+treeName+"/"+sampleName+treeName+".root")
@@ -253,15 +295,16 @@ if __name__ == "__main__":
         getSamplesToRun(args.samples,allData,allMC)
         dataTuple = getArgumentTupleForSampleGroup(args.treeName,allData,verbosity,args.outputDir, config)
         mcTuple = getArgumentTupleForSampleGroup(args.treeName,allMC,verbosity,args.outputDir, config)
-
         print(TITLE("Running over "+str(len(allData))+" DATA samples\n"))
         with multiprocessing.Pool(processes=nCPU) as pool:
-            pool.starmap(runAnalysis, dataTuple)
-            
+            pool.starmap(runAnalysis, dataTuple)   
         print(TITLE("Running over "+str(len(allMC))+" MC samples\n"))
         with multiprocessing.Pool(processes=nCPU) as pool:
             pool.starmap(runAnalysis, mcTuple)
-    
+        # Merge files if true
+        if args.histAdd:
+            print(TITLE("Merging files"))
+            mergeFiles(args.treeName,verbosity,args.outputDir,nCPU)
     # Say goodbye and print the time taken
     print(HEADER("Analysis done"))
     print(DEBUG("Time taken: "+str(time.time()-initTime)))
