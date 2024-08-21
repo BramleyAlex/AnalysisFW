@@ -75,8 +75,16 @@ sampleNameDSID_dict = {
 700588: 'VV_EWK8',
 410659: 'st_tchan_atop', #single top
 345122: 'ggHttlp15hm20', #Higgs
-1: 'data',
+346190: 'VBF_Higgs1',
+346191: 'VBF_Higgs2',
+346192: 'VBF_Higgs3',
+346193: 'VBF_Higgs4',
+512198: 'Ztautau_MG_NLO1', #Alternative QCDjj
+512199: 'Ztautau_MG_NLO2',
+512200: 'Ztautau_MG_NLO3',
+600939: 'VBF_Ztautau_PhPy8EG', #Alternative VBF
 }
+#1: 'data',
 
 # THIS FUNCTION MIGHT CHANGE FROM ONE NTUPLE FORMAT TO ANOTHER
 def getDSID(rootFiles):
@@ -191,6 +199,7 @@ if __name__ == "__main__":
 
         if len(rootFiles) != 0:
             DSID = getDSID(rootFiles)
+            if DSID == 1: continue #skip over actual data
             PERIOD_SUFFIX = getPeriodSuffix(samplePath)
             SUM_WEIGHTS = getSumOfWeights(rootFiles,samplePath)
             METADATA_DIC = getMetadataFromFile(pathToMetadata,DSID,SUM_WEIGHTS)
