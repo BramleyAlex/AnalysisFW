@@ -32,8 +32,8 @@ class CLoop {
    public :
    void Style(double lumFactor);
    void ActivateBranches(const std::string& key);
-   void Fill(double weight, int z_sample, const std::string& sampleName);
-   void FillTree(double weight, int z_sample, const std::string& sampleName);
+   virtual void Fill(double weight, int z_sample, const std::string& sampleName) = 0;
+   virtual void FillTree(double weight, int z_sample, const std::string& sampleName);
    void createOutputFile(const std::string& key);
    CLoop(TTree *tree=0,std::string sample_name="");
    ~CLoop();
@@ -46,7 +46,7 @@ class CLoop {
    void     Show(Long64_t entry = -1);
    int GetNEntries();
 
-   private:
+   protected:
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
    // Output file where all the info is going to be written. 
@@ -62,6 +62,52 @@ class CLoop {
    OutputTree m_backgroundTree{"BG", "Background TTree"};
    // Config
    CLoopConfig config;
+};
+
+class LowMass: public CLoop
+{
+public:
+   LowMass(TTree *tree=0,std::string sample_name=""):
+      CLoop(tree, sample_name){};
+   void Fill(double weight, int z_sample, const std::string& sampleName) override;
+private:
+};
+
+class MultiJetBG: public CLoop
+{
+public:
+   MultiJetBG(TTree *tree=0,std::string sample_name=""):
+      CLoop(tree, sample_name){};
+   void Fill(double weight, int z_sample, const std::string& sampleName) override;
+private:  
+};
+
+class HighMass: public CLoop
+{
+public:
+   HighMass(TTree *tree=0,std::string sample_name=""):
+      CLoop(tree, sample_name){};
+   void Fill(double weight, int z_sample, const std::string& sampleName) override;
+private:  
+};
+
+class BDT_Sample: public CLoop
+{
+public:
+   BDT_Sample(TTree *tree=0,std::string sample_name=""):
+      CLoop(tree, sample_name){};
+   void Fill(double weight, int z_sample, const std::string& sampleName) override;
+   void FillTree(double weight, int z_sample, const std::string& sampleName) override;
+private:  
+};
+
+class BDTCuts: public CLoop
+{
+public:
+   BDTCuts(TTree *tree=0,std::string sample_name=""):
+      CLoop(tree, sample_name){};
+   void Fill(double weight, int z_sample, const std::string& sampleName) override;
+private:  
 };
 
 #endif
