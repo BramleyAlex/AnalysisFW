@@ -10,12 +10,13 @@ def findMainPath():
 
 # Z->tautau datasets
 v26Paths = {
-"b78499db": ['/Users/user/Documents/HEP/v26/','/Users/user/Documents/HEP/v26-truth/','/Users/user/Documents/HEP/DiTauNtuples/']
+"b78499db": ['/Users/user/Documents/HEP/v26/','/Users/user/Documents/HEP/v26-truth/','/Users/user/Documents/HEP/DiTauNtuples/'],
+"abennett": ['/gluster/data/atlas/abennett/data/','/gluster/data/atlas/abennett/alternative_data/']
 }
 
 # Set up the example path for the analysis depending on the user machine name.
 # If the user is not in the list, add the default path.
-username = "user"
+username = os.environ['USER']
 if username in v26Paths:
     paths = v26Paths[username]
     paths = [findMainPath()+'/data/'] + paths
