@@ -71,7 +71,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
         double z_centrality=abs(lepton_xi-0.5*dijet_xi)/delta_y;
         bool N_gap_jets = CalculateNGapJets(ljet_0_p4.Rapidity(), ljet_1_p4.Rapidity(), JetEta);
 
-
         Region region = Region::DefaultNoRW;
         if (z_centrality<0.5)
         {
@@ -106,7 +105,6 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
             eventWeight = weight*lumFactor*mjj_w;
         }
         // fill histograms
-        //std::cout << eventWeight<< "   ";
         if (saveHistograms) Fill(eventWeight, z_sample, key);
         if (saveEvents) FillTree(eventWeight, z_sample, key);
         // end filling

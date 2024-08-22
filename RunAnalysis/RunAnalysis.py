@@ -1,7 +1,6 @@
 import sys
 import os
 import ROOT as r
-import numpy as np
 
 # Define the colors for the output
 class bcolors:

@@ -7,6 +7,7 @@ from DatasetsPaths import v26Paths
 totRealLum = 57.6164
 # Name of host
 username = os.environ['USER']
+username = os.environ['USER']
 
 try :  
         remote = sys.argv[2]=="yes"
