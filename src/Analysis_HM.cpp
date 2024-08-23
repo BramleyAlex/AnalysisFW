@@ -54,7 +54,7 @@ void HighMass::Fill(double weight, int z_sample, const std::string& sampleName) 
 
   std::size_t nTaus = TauPt->size();
 
-  if (nTaus==2 && JetPt->size()<4 && n_bjets==0 && tau_0_passed_medium_ID && tau_1_passed_medium_ID && same_sign){
+  if (nTaus==2 && JetPt->size()<4 && n_bjets==0 && tau_0_passed_medium_ID && tau_1_passed_medium_ID && !same_sign){
     // Angle between taus
     double angle=del_phi(tau_0_p4.Phi(),tau_1_p4.Phi());
 
@@ -124,7 +124,7 @@ void HighMass::Fill(double weight, int z_sample, const std::string& sampleName) 
       double MET_angle = std::min(del_phi(met_reco_p4.Phi(),tau_0_p4.Phi()),del_phi(met_reco_p4.Phi(),tau_1_p4.Phi()));
 
       // Handling BDT
-      m_vbfBDT.update(mjj, delta_yjj, pt_balance, z_centrality, eventNumber, total_tau_pt);
+      m_vbfBDT.update(mjj, delta_yjj, pt_balance, z_centrality, eventNumber);
       double VBFBDT_score = m_vbfBDT.evaluate();
 
       // cuts
