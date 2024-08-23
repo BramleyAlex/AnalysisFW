@@ -35,6 +35,11 @@ SampleID,category,xsectioninpb,kfactor,filterefficiency,xsecunc
 600938,PhPy8EG_A14NNPDF23_VBF_Zmumu,0.64977,1,1,1
 600939,PhPy8EG_A14NNPDF23_VBF_Ztautau,0.64977,1,1,1
 ,,,,,
+#VBF Higgs,,,,,
+346190,PowhegPy8EG_NNPDF30_AZNLOCTEQ6L1_VBFH125_tautaul13l7,3.7476,1.0,4.6566E-01
+346191,PowhegPy8EG_NNPDF30_AZNLOCTEQ6L1_VBFH125_tautaulm15hp20,3.7474000000000003,1.0,1.7637E-01
+346192,PowhegPy8EG_NNPDF30_AZNLOCTEQ6L1_VBFH125_tautaulp15hm20,3.7472999999999996,1.0,1.7648E-01
+346193,PowhegPy8EG_NNPDF30_AZNLOCTEQ6L1_VBFH125_tautauh30h20,0.0989,1.0,4.7285E-01
 ,,,,,
 ,,,,,
 ################################################################################################################,,,,,
