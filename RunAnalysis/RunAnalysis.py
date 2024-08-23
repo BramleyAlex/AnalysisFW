@@ -140,7 +140,7 @@ def createConfigObject(jobTypeArgument,verbosity,region,massRegion):
     makeReweighting = 'r' in jobTypeArgument
     if verbosity=="DEBUG" and makeReweighting:
         print(DEBUG("Making reweighting!"))
-    mvaWeightsPath = findMainPath()+"/data/MVA-Weights/10Folds_BDT-0.4.2.weights.xml"
+    mvaWeightsPath = findMainPath()+"/data/MVA-Weights/10Folds_BDT-0.4.6.weights.xml"
     if verbosity=="DEBUG":
         print(DEBUG("MVA weights path: "), mvaWeightsPath)
     if massRegion=="low":
@@ -170,7 +170,7 @@ def createArgumentParser():
     executionMode.add_argument("--inputFile", help="Input txt file with a list of samples to run over.",type=str,default="")
     parser.add_argument("--verbosity", help="Verbosity level.",type=str,default="INFO",choices=["INFO","DEBUG"])
     parser.add_argument("--treeName", help="Name of the tree to run over.",type=str,default="T_s2thh_NOMINAL")
-    parser.add_argument("--jobType", help="Type of job to run.",type=str,default="h",choices=["h","n","hn","hr","hnr"])
+    parser.add_argument("--jobType", help="Type of job to run.",type=str,default="h",choices=["h","n","hn","hr","hnr","nr"])
     parser.add_argument("--outputDir", help="Path of to the directory used to store the processed samples.",type=str,default=findMainPath()+"/Results")
     parser.add_argument("--j", help="Number of cores to use.",type=int,default=1)
     parser.add_argument("--region", help="Which region to run over.",type=str,default="all",choices=["all","SR","CR","CRa","CRb","CRc"]) #Phase this out/overhaul
