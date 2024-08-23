@@ -1,7 +1,7 @@
 #pragma once
 
 double pi=TMath::Pi();
-std::vector<std::string> cutNames{"basic","t0pt","t1pt","j0pt","j1pt","mtt","yjj","ome","ptbal","rgn","mjj"};
+std::vector<std::string> cutNames{"basic","t0pt","t1pt","j0pt","j1pt","mtt","yjj","ome","ptbal","mfrac","mjj","rgn","RNN","BDT"};
 std::vector<std::string> notFull{"basic","all"};
 
 // Raw historgrams
@@ -29,6 +29,7 @@ histogramContainer delta_R_taujetContainer{"delta_R_tau0jet","Delta R tau0-jet",
 histogramContainer pt_balanceContainer{"pt_balance","pT Balance",100,0,1,cutNames,"ptbal"};
 histogramContainer jet_gapContainer{"jet_gap", "Jet Gap",100,0,10,cutNames,"yjj"};
 histogramContainer omegaContainer{"omega", "Omega (MET angle parameter)",600,-3,3,cutNames,"ome"};
+histogramContainer mass_fracContainer{"mass_frac","Reconstructed-Visible tt invariant mass fraction",100,0,10,cutNames,"mfrac"};
 
 histogramContainer neu0_pt_insideContainer{"neu0_pt_in", "Neutrino 0 pT (MET inside)", 500,0,500,notFull};
 histogramContainer neu1_pt_insideContainer{"neu1_pt_in", "Neutrino 1 pT (MET inside)", 500,0,500,notFull};
@@ -48,12 +49,12 @@ histogramContainer neutrino_py_testContainer{"neutrino_py_test", "difference bet
 
 histogramContainer reco_mass_tt_insideContainer{"reco_mass_tt_in","Invariant of mass reconstructed tau-tau (MET inside)",1000,0,1000,cutNames,"mtt"};
 histogramContainer reco_mass_tt_outsideContainer{"reco_mass_tt_out","Invariant of mass reconstructed tau-tau (MET outside)",1000,0,1000,cutNames,"mtt"};
-histogramContainer reco_mass_ttContainer{"reco_mass_tt","Invariant of mass reconstructed tau-tau",1000,0,1000,cutNames,"mtt"};
+histogramContainer reco_mass_ttContainer{"reco_mass_tt","Invariant of mass reconstructed tau-tau",5000,0,5000,cutNames,"mtt"};
 
 histogramContainer met_angleContainer{"met_angle","Angle of MET with closest tau",32,0,3.2,notFull};
 
-histogramContainer z_centralityContainer{"centrality", "Z centrality",40,0,2,cutNames,"rgn"};
-histogramContainer N_gapjetsContainer{"N_gapjets", "Number of gap jets",2,0,2,cutNames,"rgn"};
+histogramContainer z_centralityContainer{"centrality", "Z centrality",40,0,2,cutNames, "rgn"}; //removed rgn tag, add back for high mass
+histogramContainer N_gapjetsContainer{"N_gapjets", "Number of gap jets",2,0,2,cutNames, "rgn"};
 
 histogramContainer z_sampleContainer{"z_sample", "z sample",5,0,5,notFull};
 histogramContainer weightContainer{"weight", "weight",200,-10,10,notFull};
@@ -68,3 +69,24 @@ histogramContainer jet_delta_etaContainer{"jet_delta_eta", "Pseudo-Rapidity betw
 
 histogramContainer jet_0_EContainer{"jet_0_E", "Leading Jet Energy",1000,0,1000,cutNames};
 histogramContainer jet_1_EContainer{"jet_1_E", "Sub-Leading Jet Energy",1000,0,1000,cutNames};
+
+histogramContainer tau0_rnn_1p_ssContainer{"tau0_rnn_1p_ss","Leading tau RNN Score 1 prong taus ss",100,0,1,cutNames,"RNN"};
+histogramContainer tau0_rnn_3p_ssContainer{"tau0_rnn_3p_ss","Leading tau RNN Score 3 prong taus ss",100,0,1,cutNames,"RNN"};
+histogramContainer tau0_rnn_1p_osContainer{"tau0_rnn_1p_os","Leading tau RNN Score 1 prong taus os",100,0,1,cutNames,"RNN"};
+histogramContainer tau0_rnn_3p_osContainer{"tau0_rnn_3p_os","Leading tau RNN Score 3 prong taus os",100,0,1,cutNames,"RNN"};
+
+histogramContainer tau1_rnn_1p_ssContainer{"tau1_rnn_1p_ss","Sub-Leading tau RNN Score 1 prong taus ss",100,0,1,cutNames,"RNN"};
+histogramContainer tau1_rnn_3p_ssContainer{"tau1_rnn_3p_ss","Sub-Leading tau RNN Score 3 prong taus ss",100,0,1,cutNames,"RNN"};
+histogramContainer tau1_rnn_1p_osContainer{"tau1_rnn_1p_os","Sub-Leading tau RNN Score 1 prong taus os",100,0,1,cutNames,"RNN"};
+histogramContainer tau1_rnn_3p_osContainer{"tau1_rnn_3p_os","Sub-Leading tau RNN Score 3 prong taus os",100,0,1,cutNames,"RNN"};
+
+histogramContainer tau0_rnn_1pContainer{"tau0_rnn_1p","Leading tau RNN Score 1 prong taus",100,0,1,cutNames,"RNN"};
+histogramContainer tau0_rnn_3pContainer{"tau0_rnn_3p","Leading tau RNN Score 3 prong taus",100,0,1,cutNames,"RNN"};
+histogramContainer tau1_rnn_1pContainer{"tau1_rnn_1p","Sub-Leading tau RNN Score 1 prong taus",100,0,1,cutNames,"RNN"};
+histogramContainer tau1_rnn_3pContainer{"tau1_rnn_3p","Sub-Leading tau RNN Score 3 prong taus",100,0,1,cutNames,"RNN"};
+
+histogramContainer nEventsSSContainer{"n_eventsSS","Number of events cuts",1,0.5,1.5,notFull};
+histogramContainer nEventsOSContainer{"n_eventsOS","Number of events cuts",1,0.5,1.5,notFull};
+histogramContainer nEventsContainer{"n_events","Number of events cuts",1,0.5,1.5,notFull};
+
+histogramContainer BDTScoreContainer{"BDT_score","VBF-BDT Score",200,-1,1,cutNames,"BDT"};
