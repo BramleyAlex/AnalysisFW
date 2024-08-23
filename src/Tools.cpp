@@ -145,7 +145,7 @@ std::pair<TLorentzVector,TLorentzVector> CalculateNeutrinoVector(const TLorentzV
   {
     double neu_0_pt = met_p4.Vect() * tau_0_dir;
     if (neu_0_pt >=0) neu_0_p4.SetPtEtaPhiM(neu_0_pt,tau_0_p4.Eta(),tau_0_p4.Phi(),0);
-    else neu_0_p4.SetPtEtaPhiM(-1*neu_0_pt,tau_0_p4.Eta(),tau_0_p4.Phi()+TMath::Pi(),0);
+    else neu_0_p4.SetXYZM(0, 0, 0, 0);
     neu_1_p4.SetXYZM(0, 0, 0, 0);
   }
   else
@@ -153,7 +153,7 @@ std::pair<TLorentzVector,TLorentzVector> CalculateNeutrinoVector(const TLorentzV
     double neu_1_pt = met_p4.Vect() * tau_1_dir;
     neu_0_p4.SetXYZM(0, 0, 0, 0);
     if (neu_1_pt >=0) neu_1_p4.SetPtEtaPhiM(neu_1_pt,tau_1_p4.Eta(),tau_1_p4.Phi(),0);
-    else neu_1_p4.SetPtEtaPhiM(-1*neu_1_pt,tau_1_p4.Eta(),tau_1_p4.Phi()+TMath::Pi(),0);
+    else neu_1_p4.SetXYZM(0, 0, 0, 0);
   }
   return std::pair<TLorentzVector,TLorentzVector> (neu_0_p4,neu_1_p4);
 }
@@ -201,5 +201,30 @@ bool Region(std::string region_id, const bool& N_gap_jets, const double& Z_centr
   else if (region_id == "CRc") {if (N_gap_jets == 0 && Z_centrality >= 0.5 && Z_centrality <=1) return true;}
   else if (region_id == "CR") {if (Z_centrality >= 0.5 || N_gap_jets == 1) return true;}
   else if (region_id == "all") {return true;}
+  return false;
+}
+
+bool PassTauID(const std::string& working_point, const double& RNN_score, const int& n_tracks)
+{
+  if (working_point == "tight")
+  {
+    if (RNN_score >= 0.4 && n_tracks == 1) return true;
+    else if (RNN_score >= 0.55 && n_tracks == 3) return true;
+  }
+  else if (working_point == "medium")
+  {
+    if (RNN_score >= 0.25 && n_tracks == 1) return true;
+    else if (RNN_score >= 0.40 && n_tracks == 3) return true;
+  }
+  else if (working_point == "loose")
+  {
+    if (RNN_score >= 0.15 && n_tracks == 1) return true;
+    else if (RNN_score >= 0.25 && n_tracks == 3) return true;
+  }
+  else if (working_point == "very_loose")
+  {
+    if (RNN_score >= 0.05 && n_tracks == 1) return true;
+    else if (RNN_score >= 0.05 && n_tracks == 3) return true;
+  }
   return false;
 }
