@@ -96,6 +96,8 @@ void CLoop::Loop(float lumFactor, int z_sample, std::string key, const CLoopConf
                 mjj_w = mjj_rw(mjj,parametersSHERPA[region]); 
             } else if (mcSample == MC::MadGraph){ 
                 mjj_w = mjj_rw(mjj,parametersMadGraph[region]);
+            } else if (mcSample == MC::MadGraph_NLO){
+                mjj_w = mjj_rw(mjj,parametersMadGraphNLO[region]);
             }
         }
         double eventWeight = 1;
