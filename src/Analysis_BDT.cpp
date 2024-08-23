@@ -1,6 +1,7 @@
-// Include the file that lets the program know about the data
+// Fill and Fill tree functions to produce BDT training set
 #include <vector>
 #include <algorithm>
+#include <iostream>
 #include "CLoop.h"
 #include "OutputTree.h"
 
@@ -17,7 +18,7 @@ bool Region(std::string region_id, const bool& N_gap_jets, const double& Z_centr
 bool CalculateNGapJets(const double &ljet_0_rapidity, const double &ljet_1_rapidity, const std::vector<float> *JetEta);
 bool PassTauID(const std::string& working_point, const double& RNN_score, const int& n_tracks);
 
-void LowMass::Fill(double weight, int z_sample, const std::string& sampleName) {
+void BDT_Sample::Fill(double weight, int z_sample, const std::string& sampleName) {
   double pi=TMath::Pi();
 
   // Jet vectors
@@ -79,176 +80,95 @@ void LowMass::Fill(double weight, int z_sample, const std::string& sampleName) {
       TLorentzVector ttvv_p4 = tau_0_p4 + tau_1_p4 + neus_p4.first + neus_p4.second;
       double inv_tt_reco = ttvv_p4.Mag();
 
-      if (inv_tt_reco <= 160 || sampleName.substr(0,4)!="data") //Blinding for high mass region
+      //TAU-Tau invariant mass with met
+      TLorentzVector ttmet_p4 = tau_0_p4 + tau_1_p4 + met_reco_p4;
+      double inv_ttmet = ttmet_p4.Mag();
+
+      // Minimum DeltaR between lepton and jets
+      double min_dR_tau = min_deltaR(tau_0_p4,ljet_0_p4,ljet_1_p4);
+      double min_dR_lep = min_deltaR(tau_1_p4,ljet_0_p4,ljet_1_p4);
+
+      // Transverse mass
+      double transverseMassTau1 = sqrt(2*tau_1_p4.Pt()*met_reco_p4.Pt()*(1-cos(tau_1_p4.Phi()-met_reco_p4.Phi())));
+
+      // Handling BDT
+      //float bdt_transmasstau1 = inv_tautau > 200 ? transverseMassTau1/std::pow(inv_tautau,0.3) : transverseMassTau1/std::pow(200,0.3); // for transverse-reco mass ratio
+      //m_vbfBDT.update(mjj, 0.0, 0.0, 0.0, 0.0, bdt_transmasstau1, eventNumber);
+      //double VBFBDT_score = m_vbfBDT.evaluate();
+
+      // Rapidity seperation jets
+      double delta_yjj = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
+
+      //Jet angle and Pseudo-Rapidity difference
+      double delta_phijj = del_phi(ljet_0_p4.Phi(),ljet_1_p4.Phi());
+      double delta_etajj = abs(ljet_0_p4.Eta()-ljet_1_p4.Eta());
+
+      // Rapidity seperation taus
+      double delta_ytt = abs(tau_0_reco_p4.Rapidity()-tau_1_reco_p4.Rapidity());
+      double tautau_rapidity = (tau_0_reco_p4+tau_1_reco_p4).Rapidity();
+
+      // Z centrality
+      double z_centrality = abs(tautau_rapidity-0.5*(ljet_0_p4.Rapidity()+ljet_1_p4.Rapidity())) / delta_yjj;
+
+      // N gap jets
+      bool N_gapjets = CalculateNGapJets(ljet_0_p4.Rapidity(), ljet_1_p4.Rapidity(), JetEta);
+
+      bool region_cut = Region("SR", N_gapjets, z_centrality);
+
+      // Calculating pT balance
+      std::vector<TLorentzVector> particles{ljet_0_p4,ljet_1_p4,tau_0_reco_p4,tau_1_reco_p4};
+      if (N_gapjets) 
       {
-        //TAU-Tau invariant mass with met
-        TLorentzVector ttmet_p4 = tau_0_p4 + tau_1_p4 + met_reco_p4;
-        double inv_ttmet = ttmet_p4.Mag();
-
-        // Minimum DeltaR between lepton and jets
-        double min_dR_tau = min_deltaR(tau_0_p4,ljet_0_p4,ljet_1_p4);
-        double min_dR_lep = min_deltaR(tau_1_p4,ljet_0_p4,ljet_1_p4);
-
-        // Transverse mass
-        double transverseMassTau1 = sqrt(2*tau_1_p4.Pt()*met_reco_p4.Pt()*(1-cos(tau_1_p4.Phi()-met_reco_p4.Phi())));
-
-        // Handling BDT
-        //float bdt_transmasstau1 = inv_tautau > 200 ? transverseMassTau1/std::pow(inv_tautau,0.3) : transverseMassTau1/std::pow(200,0.3); // for transverse-reco mass ratio
-        //m_vbfBDT.update(mjj, 0.0, 0.0, 0.0, 0.0, bdt_transmasstau1, eventNumber);
-        //double VBFBDT_score = m_vbfBDT.evaluate();
-
-        // Rapidity seperation jets
-        double delta_yjj = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
-
-        //Jet angle and Pseudo-Rapidity difference
-        double delta_phijj = del_phi(ljet_0_p4.Phi(),ljet_1_p4.Phi());
-        double delta_etajj = abs(ljet_0_p4.Eta()-ljet_1_p4.Eta());
-
-        // Rapidity seperation taus
-        double delta_ytt = abs(tau_0_reco_p4.Rapidity()-tau_1_reco_p4.Rapidity());
-        double tautau_rapidity = (tau_0_reco_p4+tau_1_reco_p4).Rapidity();
-
-        // Z centrality
-        double z_centrality = abs(tautau_rapidity-0.5*(ljet_0_p4.Rapidity()+ljet_1_p4.Rapidity())) / delta_yjj;
-
-        // N gap jets
-        bool N_gapjets = CalculateNGapJets(ljet_0_p4.Rapidity(), ljet_1_p4.Rapidity(), JetEta);
-
-        bool region_cut = Region(config.m_region, N_gapjets, z_centrality);
-
-        // Calculating pT balance
-        std::vector<TLorentzVector> particles{ljet_0_p4,ljet_1_p4,tau_0_reco_p4,tau_1_reco_p4};
-        if (N_gapjets) 
-        {
-          TLorentzVector ljet_2_p4;
-          ljet_2_p4.SetPtEtaPhiE(JetPt->at(2),JetEta->at(2),JetPhi->at(2),JetE->at(2));
-          ljet_2_p4 = toGeV(ljet_2_p4);
-          particles.push_back(ljet_2_p4);
-        }
-        double pt_balance = CalculatePtBalance(particles);
-
-        // Omega
-        double omega = CalculateOmega(tau_0_p4, tau_1_p4, met_reco_p4);
-
-        // MET angle
-        double MET_angle = std::min(del_phi(met_reco_p4.Phi(),tau_0_p4.Phi()),del_phi(met_reco_p4.Phi(),tau_1_p4.Phi()));
-      
-        // cuts
-
-        bool diLeptonMassRequirement;
-        if (config.m_massRegion == LOW_M) diLeptonMassRequirement =  inv_tt_reco >= 66 && inv_tt_reco <=116;
-        else if (config.m_massRegion == MEDIUM_M) diLeptonMassRequirement =  inv_tt_reco >= 101 && inv_tt_reco <=160;
-        else if (config.m_massRegion == HIGH_M) std::cerr<<"High mass cut not defined yet"<<std::endl;
-        // Cuts vector
-        std::vector<int> cuts={0,0,0,0,0,0,0,0,0,0,0,0,0};
-        // CUTS
-        if(tau_0_p4.Pt()>=80){cuts[0]=1;} //80
-        if(tau_1_p4.Pt()>=60){cuts[1]=1;} //60
-        if(ljet_0_p4.Pt()>=75){cuts[2]=1;}
-        if(ljet_1_p4.Pt()>=70){cuts[3]=1;}
-        if (diLeptonMassRequirement){cuts[4]=1;}
-        if (delta_yjj > 2){cuts[5]=1;}
-        if (omega >= -0.4 && omega <= 1.4){cuts[6]=1;}
-        if (pt_balance <= 0.15){cuts[7]=1;}
-        cuts[8]=1; //m frac
-        if(mjj>=1000){cuts[9]=1;}
-        if (region_cut){cuts[10]=1;}
-        cuts[11]=1; //RNN
-        cuts[12]=1; //BDT
-
-        // SUM OF THE VECTOR STORING IF CUTS PASS OR NOT
-        size_t sum{0};
-        for(auto &j : cuts){sum=sum+j;}
-
-        std::vector<int> cutsVector{1};
-        cutsVector.insert(cutsVector.end(),cuts.begin(),cuts.end());
-        bool passedAllCuts = (sum+1==cutsVector.size());
-        std::vector<int> notFullCutsVector{1,static_cast<int>(passedAllCuts)};
-
-        // Test of neutrino energy splitting
-        TLorentzVector total_p4 = neus_p4.first + neus_p4.second;
-        TLorentzVector difference_p4 = met_reco_p4 - total_p4;
-        
-        // FILL RAW HISTOGRAMS
-        if (passedAllCuts){
-          nJets->Fill(JetPt->size(),weight);
-          tau0Eta->Fill(tau_0_p4.Eta(),weight);
-        }
-
-        // FILLING CONATINER HISTOGRAMS
-        tau0_ptContainer.Fill(tau_0_p4.Pt(),weight,cutsVector);
-        tau1_ptContainer.Fill(tau_1_p4.Pt(),weight,cutsVector);
-        n_bjetsContainer.Fill(n_bjets,weight,notFullCutsVector);
-        delta_phiContainer.Fill(angle,weight,cutsVector);
-        mass_jjContainer.Fill(mjj,weight,cutsVector);
-        ljet0_ptContainer.Fill(ljet_0_p4.Pt(),weight,cutsVector);
-        ljet1_ptContainer.Fill(ljet_1_p4.Pt(),weight,cutsVector);
-        //bdtContainer.Fill(VBFBDT_score,weight,notFullCutsVector);
-        visibleMassContainer.Fill(inv_tautau,weight,cutsVector);
-        tau1TransMassContainer.Fill(transverseMassTau1,weight,cutsVector);
-        delta_R_lepjetContainer.Fill(min_dR_lep,weight,cutsVector);
-        delta_R_taujetContainer.Fill(min_dR_tau,weight,cutsVector);
-        Z_ptContainer.Fill(truth_z_pt,weight,notFullCutsVector);
-        pt_balanceContainer.Fill(pt_balance,weight,cutsVector);
-        jet_gapContainer.Fill(delta_yjj,weight,cutsVector);
-        omegaContainer.Fill(omega,weight,cutsVector);
-        if (omega >= 0 && omega <=1) neu0_pt_insideContainer.Fill(neus_p4.first.Pt(),weight,notFullCutsVector);
-        else neu0_pt_outsideContainer.Fill(neus_p4.first.Pt(),weight,notFullCutsVector);
-        if (omega >= 0 && omega <=1) neu1_pt_insideContainer.Fill(neus_p4.second.Pt(),weight,notFullCutsVector);
-        else neu1_pt_outsideContainer.Fill(neus_p4.second.Pt(),weight,notFullCutsVector);
-
-        if (omega >= 0 && omega <=1) tau0_reco_pt_inContainer.Fill(tau_0_reco_p4.Pt(),weight,notFullCutsVector);
-        else tau0_reco_pt_outContainer.Fill(tau_0_reco_p4.Pt(),weight,notFullCutsVector);
-        if (omega >= 0 && omega <=1) tau1_reco_pt_inContainer.Fill(tau_1_reco_p4.Pt(),weight,notFullCutsVector);
-        else tau1_reco_pt_outContainer.Fill(tau_1_reco_p4.Pt(),weight,notFullCutsVector);
-
-        if (omega >= 0 && omega <=1) reco_mass_tt_insideContainer.Fill(inv_tt_reco,weight,cutsVector);
-        else reco_mass_tt_outsideContainer.Fill(inv_tt_reco,weight,cutsVector);
-        reco_mass_ttContainer.Fill(inv_tt_reco,weight,cutsVector);
-
-        met_angleContainer.Fill(MET_angle,weight,notFullCutsVector);
-
-        if (N_gapjets == 0) z_centralityContainer.Fill(z_centrality,weight,cutsVector);
-        if (z_centrality < 0.5) N_gapjetsContainer.Fill(N_gapjets,weight,cutsVector);
-
-        z_sampleContainer.Fill(z_sample,weight,notFullCutsVector);
-        weightContainer.Fill(weight,weight,notFullCutsVector);
-
-        jet_0_phiContainer.Fill(ljet_0_p4.Phi(),weight,cutsVector);
-        jet_1_phiContainer.Fill(ljet_1_p4.Phi(),weight,cutsVector);
-        jet_delta_phiContainer.Fill(delta_phijj,weight,cutsVector);
-
-        jet_0_etaContainer.Fill(ljet_0_p4.Eta(),weight,cutsVector);
-        jet_1_etaContainer.Fill(ljet_1_p4.Eta(),weight,cutsVector);
-        jet_delta_etaContainer.Fill(delta_etajj,weight,cutsVector);
-
-        jet_0_EContainer.Fill(ljet_0_p4.E(),weight,cutsVector);
-        jet_1_EContainer.Fill(ljet_1_p4.E(),weight,cutsVector);
-
-        int tau0NTracks = TauNCoreTracks->at(0);
-        int tau1NTracks = TauNCoreTracks->at(1);
-
-        if (tau0NTracks==1) rnn_score_1pContainer.Fill(TauRNNJetScore->at(0),weight,notFullCutsVector);
-        if (tau1NTracks==3) rnn_score_3pContainer.Fill(TauRNNJetScore->at(1),weight,notFullCutsVector);
-
-        // Only for MC samples
-        if (sampleName.substr(0,4)!="data"){
-          if (tau0NTracks==1) tau_matched_1pContainer.Fill(TauRNNJetScore->at(0),weight,notFullCutsVector);
-          if (tau1NTracks==3) tau_matched_3pContainer.Fill(TauRNNJetScore->at(1),weight,notFullCutsVector);
-        }
+        TLorentzVector ljet_2_p4;
+        ljet_2_p4.SetPtEtaPhiE(JetPt->at(2),JetEta->at(2),JetPhi->at(2),JetE->at(2));
+        ljet_2_p4 = toGeV(ljet_2_p4);
+        particles.push_back(ljet_2_p4);
       }
+      double pt_balance = CalculatePtBalance(particles);
+
+      // Omega
+      double omega = CalculateOmega(tau_0_p4, tau_1_p4, met_reco_p4);
+
+      // MET angle
+      double MET_angle = std::min(del_phi(met_reco_p4.Phi(),tau_0_p4.Phi()),del_phi(met_reco_p4.Phi(),tau_1_p4.Phi()));
+    
+      // cuts
+
+      bool diLeptonMassRequirement = inv_tt_reco > 135;
+      // Cuts vector
+      std::vector<int> cuts={0,0,0,0,0,0,0,0,0,0};
+      // CUTS
+      if(tau_0_p4.Pt()>=80){cuts[0]=1;} //80
+      if(tau_1_p4.Pt()>=50){cuts[1]=1;} //50
+      if(ljet_0_p4.Pt()>=75){cuts[2]=1;}
+      if(ljet_1_p4.Pt()>=70){cuts[3]=1;}
+      if (diLeptonMassRequirement){cuts[4]=1;}
+      if (delta_yjj > 2){cuts[5]=1;}
+      if (omega >= -0.4 && omega <= 1.4){cuts[6]=1;}
+      if (pt_balance <= 0.15){cuts[7]=1;}
+      if (region_cut){cuts[8]=1;}
+      if(mjj>=1000){cuts[9]=1;} 
+
+      // SUM OF THE VECTOR STORING IF CUTS PASS OR NOT
+      size_t sum{0};
+      for(auto &j : cuts){sum=sum+j;}
+
+      std::vector<int> cutsVector{1};
+      cutsVector.insert(cutsVector.end(),cuts.begin(),cuts.end());
+      bool passedAllCuts = (sum+1==cutsVector.size());
+      std::vector<int> notFullCutsVector{1,static_cast<int>(passedAllCuts)};
+
+      // Test of neutrino energy splitting
+      TLorentzVector total_p4 = neus_p4.first + neus_p4.second;
+      TLorentzVector difference_p4 = met_reco_p4 - total_p4;
+      
+      // FILLING CONATINER HISTOGRAMS
     }
   }
 }
 
-void CLoop::Style(double lumFactor) {
-  nJets->Write();
-  tau0Eta->Write();
-}
-
-void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName) {
+void BDT_Sample::FillTree(double weight, int z_sample, const std::string& sampleName) {
   double pi=TMath::Pi();
-
   // Jet vectors
   TLorentzVector ljet_0_p4;
   TLorentzVector ljet_1_p4;
@@ -272,15 +192,13 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
   //Charges and lepton ID
   float qtau0=TauCharge->at(0);
   float qtau1=TauCharge->at(1);
-
-  //Tau loose working point
-  bool passed_loose_tau_RNN{false};
-  if (TauRNNJetScore->at(0) > 0.15 && TauNCoreTracks->at(0) == 1) passed_loose_tau_RNN = true;
-  else if (TauRNNJetScore->at(0) > 0.25 && TauNCoreTracks->at(0) == 3) passed_loose_tau_RNN = true;
+  // Tau medium working point
+  bool tau_0_passed_medium_RNN = PassTauID("medium", TauRNNJetScore->at(0), TauNCoreTracks->at(0));
+  bool tau_1_passed_medium_RNN = PassTauID("medium", TauRNNJetScore->at(1), TauNCoreTracks->at(1));
 
   std::size_t nTaus = TauPt->size();
 
-  if (qtau0!=qtau1 && nTaus==2 && passed_loose_tau_RNN && n_bjets==0){
+  if (qtau0!=qtau1 && nTaus==2 && tau_0_passed_medium_RNN && tau_1_passed_medium_RNN && JetPt->size()<4 && n_bjets==0){
     // Angle between taus
     double angle=del_phi(tau_0_p4.Phi(),tau_1_p4.Phi());
 
@@ -297,9 +215,22 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
       double Z_pt = (tau_1_p4 + tau_0_p4).Pt();
       if (z_sample==0) truth_z_pt=Z_pt;
     
+      // Neutrinos
+      std::pair<TLorentzVector,TLorentzVector> neus_p4;
+      neus_p4 = CalculateNeutrinoVector(met_reco_p4, tau_0_p4, tau_1_p4);
+      TLorentzVector tau_0_reco_p4 = tau_0_p4 + neus_p4.first;
+      TLorentzVector tau_1_reco_p4 = tau_1_p4 + neus_p4.second;
 
-      // LEP-TAU INVARIANT MASS
+      // TAU-TAU INVARIANT MASS
       double inv_tautau=sqrt((2*tau_1_p4.Pt()*tau_0_p4.Pt())*(cosh(tau_1_p4.Eta()-tau_0_p4.Eta())-cos(tau_1_p4.Phi()-tau_0_p4.Phi())));
+
+      // TAU-TAU invariant mass with neutrinos
+      TLorentzVector ttvv_p4 = tau_0_p4 + tau_1_p4 + neus_p4.first + neus_p4.second;
+      double inv_tt_reco = ttvv_p4.Mag();
+
+      //TAU-Tau invariant mass with met
+      TLorentzVector ttmet_p4 = tau_0_p4 + tau_1_p4 + met_reco_p4;
+      double inv_ttmet = ttmet_p4.Mag();
 
       // Minimum DeltaR between lepton and jets
       double min_dR_tau = min_deltaR(tau_0_p4,ljet_0_p4,ljet_1_p4);
@@ -307,26 +238,62 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
 
       // Transverse mass
       double transverseMassTau1 = sqrt(2*tau_1_p4.Pt()*met_reco_p4.Pt()*(1-cos(tau_1_p4.Phi()-met_reco_p4.Phi())));
+      double transMassRatio = transverseMassTau1 / inv_tt_reco;
+      double transMassRatioFunc = transverseMassTau1 / std::pow(inv_tt_reco,0.3);
 
-      // Pt balance
-      std::vector<TLorentzVector> particles{ljet_0_p4,ljet_1_p4,tau_0_p4,tau_1_p4};
+      // Rapidity seperation jets
+      double delta_yjj = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
+
+      //Jet angle and Pseudo-Rapidity difference
+      double delta_phijj = del_phi(ljet_0_p4.Phi(),ljet_1_p4.Phi());
+      double delta_etajj = abs(ljet_0_p4.Eta()-ljet_1_p4.Eta());
+
+      // Rapidity seperation taus
+      double delta_ytt = abs(tau_0_reco_p4.Rapidity()-tau_1_reco_p4.Rapidity());
+      double tautau_rapidity = (tau_0_reco_p4+tau_1_reco_p4).Rapidity();
+
+      // Z centrality
+      double z_centrality = abs(tautau_rapidity-0.5*(ljet_0_p4.Rapidity()+ljet_1_p4.Rapidity())) / delta_yjj;
+
+      // N gap jets
+      bool N_gapjets = CalculateNGapJets(ljet_0_p4.Rapidity(), ljet_1_p4.Rapidity(), JetEta);
+
+      bool region_cut = Region("SR", N_gapjets, z_centrality);
+
+      // Calculating pT balance
+      std::vector<TLorentzVector> particles{ljet_0_p4,ljet_1_p4,tau_0_reco_p4,tau_1_reco_p4};
+      if (N_gapjets) 
+      {
+        TLorentzVector ljet_2_p4;
+        ljet_2_p4.SetPtEtaPhiE(JetPt->at(2),JetEta->at(2),JetPhi->at(2),JetE->at(2));
+        ljet_2_p4 = toGeV(ljet_2_p4);
+        particles.push_back(ljet_2_p4);
+      }
       double pt_balance = CalculatePtBalance(particles);
 
-      // Rapidity seperation
-      double delta_y = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
+      // Omega
+      double omega = CalculateOmega(tau_0_p4, tau_1_p4, met_reco_p4);
+
+      // MET angle
+      double MET_angle = std::min(del_phi(met_reco_p4.Phi(),tau_0_p4.Phi()),del_phi(met_reco_p4.Phi(),tau_1_p4.Phi()));
     
+      // cuts
+
+      bool diLeptonMassRequirement = inv_tt_reco > 116 && inv_tt_reco < 15000;
       // Cuts vector
       std::vector<int> cuts={0,0,0,0,0,0,0,0,0,0};
       // CUTS
-      if(tau_1_p4.Pt()>=30){cuts[0]=1;}
-      if (tau_0_p4.Pt()>=35){cuts[1]=1;}
+      if(tau_0_p4.Pt()>=80){cuts[0]=1;} //80
+      if(tau_1_p4.Pt()>=50){cuts[1]=1;} //50
       if(ljet_0_p4.Pt()>=75){cuts[2]=1;}
       if(ljet_1_p4.Pt()>=70){cuts[3]=1;}
-      if(mjj>=1000){cuts[4]=1;} 
-      bool diLeptonMassRequirement =  inv_tautau >= 70;
-      if (diLeptonMassRequirement){cuts[5]=1;}
-      if (delta_y > 2){cuts[6]=1;}
-      
+      if (diLeptonMassRequirement){cuts[4]=1;}
+      if (delta_yjj > 0){cuts[5]=1;} //delta_yjj > 2
+      if (omega >= -0.4 && omega <= 1.4){cuts[6]=1;}
+      if (pt_balance <= 0.15){cuts[7]=1;} //pt_balance <= 0.15
+      if (true){cuts[8]=1;} //region_cut
+      if(mjj>=500){cuts[9]=1;}
+
       // SUM OF THE VECTOR STORING IF CUTS PASS OR NOT
       size_t sum{0};
       for(auto &j : cuts){sum=sum+j;}
@@ -334,23 +301,26 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
       std::vector<int> cutsVector{1};
       cutsVector.insert(cutsVector.end(),cuts.begin(),cuts.end());
       bool passedAllCuts = (sum+1==cutsVector.size());
+      bool failedOnlyRegionCut = cuts[8]==0 && (sum == cutsVector.size() - 2);
       std::vector<int> notFullCutsVector{1,static_cast<int>(passedAllCuts)};
 
       if (passedAllCuts){
       // FILLING TTree
-      // Check if sample is VBF Ztautau
+      // Check if sample is VBF Ztautau or VBF Higgs
       bool isVBF = sampleName.find("VBF") != std::string::npos;
       bool isZtautau = sampleName.find("Ztautau") != std::string::npos;
+      bool isHiggs = sampleName.find("Higgs") != std::string::npos;
       if (isVBF) 
       {
-        if (isZtautau) 
+        if (isZtautau || isHiggs) 
         {
           m_signalTree.m_mcWeight = weight;
           m_signalTree.m_mjj = mjj;
           m_signalTree.m_deltaPhiLT = angle;
           m_signalTree.m_t0RNNScore = TauRNNJetScore->at(0);
+          m_signalTree.m_t1RNNScore = TauRNNJetScore->at(1);
           m_signalTree.m_transverseMassLep = transverseMassTau1;
-          m_signalTree.m_massTauTau = inv_tautau;
+          m_signalTree.m_massTauTau = inv_tt_reco;
           m_signalTree.m_tau0_pT = tau_0_p4.Pt();
           m_signalTree.m_tau1_pT = tau_1_p4.Pt();
           m_signalTree.m_jet0_pT = ljet_0_p4.Pt();
@@ -358,7 +328,14 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
           m_signalTree.m_met_pT = met_reco_p4.Pt();
           m_signalTree.m_event_number = eventNumber;
           m_signalTree.m_pt_balance = pt_balance;
-          m_signalTree.m_jet_gap = delta_y;
+          m_signalTree.m_jet_gap = delta_yjj;
+          m_signalTree.m_omega = omega;
+          m_signalTree.m_centrality = z_centrality;
+          m_signalTree.m_total_jet_pT = (ljet_0_p4 + ljet_1_p4).Pt();
+          m_signalTree.m_total_tau_pT = (tau_0_p4 + tau_1_p4).Pt();
+          m_signalTree.m_total_tau_mom = ttvv_p4.Pt();
+          m_signalTree.m_transMassRatio = transMassRatio;
+          m_signalTree.m_transMassRatioFunc = transMassRatioFunc;
           // Fill tree
           m_signalTree.FillTree();
         } 
@@ -367,8 +344,9 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
         m_backgroundTree.m_mjj = mjj;
         m_backgroundTree.m_deltaPhiLT = angle;
         m_backgroundTree.m_t0RNNScore = TauRNNJetScore->at(0);
+        m_backgroundTree.m_t1RNNScore = TauRNNJetScore->at(1);
         m_backgroundTree.m_transverseMassLep = transverseMassTau1;
-        m_backgroundTree.m_massTauTau = inv_tautau;
+        m_backgroundTree.m_massTauTau = inv_tt_reco;
         m_backgroundTree.m_tau0_pT = tau_0_p4.Pt();
         m_backgroundTree.m_tau1_pT = tau_1_p4.Pt();
         m_backgroundTree.m_jet0_pT = ljet_0_p4.Pt();
@@ -376,7 +354,14 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
         m_backgroundTree.m_met_pT = met_reco_p4.Pt();
         m_backgroundTree.m_event_number = eventNumber;
         m_backgroundTree.m_pt_balance = pt_balance;
-        m_backgroundTree.m_jet_gap = delta_y;
+        m_backgroundTree.m_jet_gap = delta_yjj;
+        m_backgroundTree.m_omega = omega;
+        m_backgroundTree.m_centrality = z_centrality;
+        m_backgroundTree.m_total_jet_pT = (ljet_0_p4 + ljet_1_p4).Pt();
+        m_backgroundTree.m_total_tau_pT = (tau_0_p4 + tau_1_p4).Pt();
+        m_backgroundTree.m_total_tau_mom = ttvv_p4.Pt();
+        m_backgroundTree.m_transMassRatio = transMassRatio;
+        m_backgroundTree.m_transMassRatioFunc = transMassRatioFunc;
         // Fill tree
         m_backgroundTree.FillTree();
       }
@@ -385,7 +370,7 @@ void CLoop::FillTree(double weight, int z_sample, const std::string& sampleName)
 }
 }
 
-void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName) {
+void BDTCuts::Fill(double weight, int z_sample, const std::string& sampleName) {
   double pi=TMath::Pi();
 
   // Jet vectors
@@ -413,18 +398,17 @@ void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName
   float qtau1=TauCharge->at(1);
   bool same_sign = qtau0 == qtau1;
 
-  // Tau medium working point
+  // Medium working point
   bool tau_0_passed_medium_ID = PassTauID("medium", TauRNNJetScore->at(0), TauNCoreTracks->at(0));
   bool tau_1_passed_medium_ID = PassTauID("medium", TauRNNJetScore->at(1), TauNCoreTracks->at(1));
 
   // Tight working point
   bool tau_0_passed_tight_ID = PassTauID("tight", TauRNNJetScore->at(0), TauNCoreTracks->at(0));
   bool tau_1_passed_tight_ID = PassTauID("tight", TauRNNJetScore->at(1), TauNCoreTracks->at(1));
-  bool failed_tight = !tau_0_passed_tight_ID || !tau_1_passed_tight_ID;
 
   std::size_t nTaus = TauPt->size();
 
-  if (nTaus==2 && JetPt->size()<4 && n_bjets==0 && tau_0_passed_medium_ID && tau_1_passed_medium_ID && failed_tight){
+  if (nTaus==2 && JetPt->size()<4 && n_bjets==0 && tau_0_passed_medium_ID && tau_1_passed_medium_ID && !same_sign){
     // Angle between taus
     double angle=del_phi(tau_0_p4.Phi(),tau_1_p4.Phi());
 
@@ -434,7 +418,7 @@ void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName
     double mjj=sqrt(2*(ljet_0_p4.Dot(ljet_1_p4)));
 
     if (mjj>=250 && trigger_decision) {
-
+      
       // ZpT calculations
       double truth_z_pt=0.0;
 
@@ -453,6 +437,7 @@ void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName
       // TAU-TAU reconstructed invariant
       TLorentzVector ttvv_p4 = tau_0_p4 + tau_1_p4 + neus_p4.first + neus_p4.second;
       double inv_tt_reco = ttvv_p4.Mag();
+      double total_tau_pt = ttvv_p4.Pt();
 
       double mass_ratio = inv_tt_reco / inv_tautau;
 
@@ -462,11 +447,6 @@ void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName
 
       // Transverse mass
       double transverseMassTau1 = sqrt(2*tau_1_p4.Pt()*met_reco_p4.Pt()*(1-cos(tau_1_p4.Phi()-met_reco_p4.Phi())));
-
-      // Handling BDT
-      //float bdt_transmasstau1 = inv_tautau > 200 ? transverseMassTau1/std::pow(inv_tautau,0.3) : transverseMassTau1/std::pow(200,0.3); // for transverse-reco mass ratio
-      //m_vbfBDT.update(mjj, 0.0, 0.0, 0.0, 0.0, bdt_transmasstau1, eventNumber);
-      //double VBFBDT_score = m_vbfBDT.evaluate();
 
       // Rapidity seperation jets
       double delta_yjj = abs(ljet_0_p4.Rapidity()-ljet_1_p4.Rapidity());
@@ -497,28 +477,32 @@ void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName
       // MET angle
       double MET_angle = std::min(del_phi(met_reco_p4.Phi(),tau_0_p4.Phi()),del_phi(met_reco_p4.Phi(),tau_1_p4.Phi()));
 
+      // Handling BDT
+      m_vbfBDT.update(mjj, delta_yjj, pt_balance, z_centrality, eventNumber, total_tau_pt);
+      double VBFBDT_score = m_vbfBDT.evaluate();
+
       // cuts
 
       bool diLeptonMassRequirement;
-      //if (config.m_massRegion == LOW_M) diLeptonMassRequirement =  inv_tt_reco >= 66 && inv_tt_reco <=116;
-      //else if (config.m_massRegion == MEDIUM_M) diLeptonMassRequirement =  inv_tt_reco >= 101 && inv_tt_reco <=160;
-      //else if (config.m_massRegion == HIGH_M) 
-      diLeptonMassRequirement = inv_tt_reco > 160;
+      //diLeptonMassRequirement = inv_tt_reco > 160;
+      diLeptonMassRequirement = inv_tt_reco < 116 && inv_tt_reco > 66;
 
       // Cuts vector
-      std::vector<int> cuts={0,0,0,0,0,0,0,0,0,0,0};
+      std::vector<int> cuts={0,0,0,0,0,0,0,0,0,0,0,0,0};
       // CUTS
       if(tau_0_p4.Pt()>=80){cuts[0]=1;} //80
-      if(tau_1_p4.Pt()>=50){cuts[1]=1;} //50
-      if(ljet_0_p4.Pt()>=65){cuts[2]=1;}
-      if(ljet_1_p4.Pt()>=60){cuts[3]=1;}
-      if (diLeptonMassRequirement){cuts[4]=1;}
-      if (delta_yjj > 2){cuts[5]=1;}
-      if (omega >= -0.4 && omega <= 1.4){cuts[6]=1;}
-      if (pt_balance <= 0.15){cuts[7]=1;}
-      if (mass_ratio < 4.0){cuts[8]=1;}
-      if(mjj>=400){cuts[9]=1;}
-      {cuts[10]=1;}
+      if(tau_1_p4.Pt()>=60){cuts[1]=1;} //60
+      if(ljet_0_p4.Pt()>=75){cuts[2]=1;}
+      if(ljet_1_p4.Pt()>=70){cuts[3]=1;}
+      if(diLeptonMassRequirement){cuts[4]=1;}
+      if(delta_yjj>2){cuts[5]=1;}
+      if(omega >= -0.4 && omega <= 1.4){cuts[6]=1;}
+      if(pt_balance <= 0.15){cuts[7]=1;}
+      if(mass_ratio < 4.0){cuts[8]=1;}
+      if(mjj>=750){cuts[9]=1;}
+      if(SR_cut){cuts[10]=1;}
+      if(true){cuts[11]=1;} //tau_0_passed_tight_ID && tau_1_passed_tight_ID
+      if(VBFBDT_score > 0.3){cuts[12]=1;}
 
       // SUM OF THE VECTOR STORING IF CUTS PASS OR NOT
       size_t sum{0};
@@ -538,35 +522,35 @@ void MultiJetBG::Fill(double weight, int z_sample, const std::string& sampleName
         nJets->Fill(JetPt->size(),weight);
         tau0Eta->Fill(tau_0_p4.Eta(),weight);
       }
-
       // FILLING CONATINER HISTOGRAMS
-      
       int tau0NTracks = TauNCoreTracks->at(0);
       int tau1NTracks = TauNCoreTracks->at(1);
 
-      if (same_sign)
-      {
-        nEventsSSContainer.Fill(1,weight,notFullCutsVector);
-        if (tau0NTracks==1) tau0_rnn_1p_ssContainer.Fill(TauRNNJetScore->at(0),weight,cutsVector);
-        else tau0_rnn_3p_ssContainer.Fill(TauRNNJetScore->at(0),weight,cutsVector);
-      }
-      else
-      {
-        nEventsOSContainer.Fill(1,weight,notFullCutsVector);
-        if (tau0NTracks==1) tau0_rnn_1p_osContainer.Fill(TauRNNJetScore->at(0),weight,cutsVector);
-        else tau0_rnn_3p_osContainer.Fill(TauRNNJetScore->at(0),weight,cutsVector);
-      }
+      tau0_ptContainer.Fill(tau_0_p4.Pt(),weight,cutsVector);
+      tau1_ptContainer.Fill(tau_1_p4.Pt(),weight,cutsVector);
+      ljet0_ptContainer.Fill(ljet_0_p4.Pt(),weight,cutsVector);
+      ljet1_ptContainer.Fill(ljet_1_p4.Pt(),weight,cutsVector);
+      reco_mass_ttContainer.Fill(inv_tt_reco,weight,cutsVector);
+      jet_gapContainer.Fill(delta_yjj,weight,cutsVector);
+      omegaContainer.Fill(omega,weight,cutsVector);
+      pt_balanceContainer.Fill(pt_balance,weight,cutsVector);
+      mass_fracContainer.Fill(mass_ratio,weight,cutsVector);
+      mass_jjContainer.Fill(mjj,weight,cutsVector);
+      if (N_gapjets == 0) z_centralityContainer.Fill(z_centrality,weight,cutsVector);
+      if (z_centrality < 0.5) N_gapjetsContainer.Fill(N_gapjets,weight,cutsVector);
 
-      if (same_sign)
-      {
-        if (tau1NTracks==1) tau1_rnn_1p_ssContainer.Fill(TauRNNJetScore->at(1),weight,cutsVector);
-        else tau1_rnn_3p_ssContainer.Fill(TauRNNJetScore->at(1),weight,cutsVector);
-      }
-      else
-      {
-        if (tau1NTracks==1) tau1_rnn_1p_osContainer.Fill(TauRNNJetScore->at(1),weight,cutsVector);
-        else tau1_rnn_3p_osContainer.Fill(TauRNNJetScore->at(1),weight,cutsVector);
-      }
+      if (tau0NTracks==1) tau0_rnn_1pContainer.Fill(TauRNNJetScore->at(0),weight,cutsVector);
+      else tau0_rnn_3pContainer.Fill(TauRNNJetScore->at(0),weight,cutsVector);
+      if (tau1NTracks==1) tau1_rnn_1pContainer.Fill(TauRNNJetScore->at(1),weight,cutsVector);
+      else tau1_rnn_3pContainer.Fill(TauRNNJetScore->at(1),weight,cutsVector);
+
+      BDTScoreContainer.Fill(VBFBDT_score,weight,cutsVector);
+
+      n_bjetsContainer.Fill(n_bjets,weight,notFullCutsVector);
+      delta_phiContainer.Fill(angle,weight,cutsVector);
+      
+      nEventsContainer.Fill(1,weight,notFullCutsVector);
+
 
       // Only for MC samples
       if (sampleName.substr(0,4)!="data"){
